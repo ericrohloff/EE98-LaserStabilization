@@ -1,23 +1,48 @@
 import threading
 import time
-from cavity import Cavity
-from laser import SimLaser
+from cavity import Cavity, CavityController
+from laser import Laser, LaserController
 import numpy as np
 from matplotlib import pyplot as plt
 
 end_sim = threading.Event()
-scanning = False
+record_data = threading.Event()
 
 cavity = Cavity(535, 820)  # example cavity range
+cavity_controller = CavityController(cavity)
 vouts = []
+peaks = []
 cavity_values = []
 
+BUCKET_SIZE = 10
+# fifo bucket for storing cavity values
+peak_bucket = []
+
 def run_simulation():
-    global scanning
+    global scanning, BUCKET_SIZE
     while not end_sim.is_set():
-        if scanning:
+        if record_data.is_set():
             # Simulation logic would go here
             cavity.ramp(10, 1e6)  # Example ramp call
+            
+            peak_bucket.append(cavity.v_out)
+            peak_bucket.pop(0) if len(peak_bucket) >= BUCKET_SIZE else None
+            
+            if cavity_controller.detect_peak(peak_bucket):
+                peaks.append(1)
+            else:
+                peaks.append(0)
+
+            # TODO: Valid peak detection below
+            # currMax = cavity.v_out
+            # currMaxPos = cavity.curr_pos_nm
+
+            # if(cavity.v_out > currMax):
+            #     currMax = cavity.v_out
+            #     currMaxPos = cavity.curr_pas_num
+            
+            # peaks.append()
+
             vouts.append(cavity.v_out)
             cavity_values.append(cavity.curr_pos_nm)
 
@@ -48,7 +73,7 @@ def handle_command(command: str):
             return
         laser_id = parts[1]
         print(f"Unlocking laser {laser_id}...")
-        # TODO: Call API to lock the laser
+        # TODO: Call API to unlock the laser
         pass
 
     elif cmd == 'start_cavity_scan':
@@ -56,20 +81,22 @@ def handle_command(command: str):
             print("Usage: start_cavity_scan <duration>")
             return
         duration = float(parts[1])
-        scanning = True
+        record_data.set()
+        def timer_end():
+            record_data.clear()
+            print("Cavity scan duration ended.")
+        timer = threading.Timer(duration, timer_end)
+        timer.start()
         print(f"Starting cavity scan for {duration} seconds...")
-        # TODO: Call API to lock the laser
         pass
 
 
     elif cmd == 'stop_cavity_scan':
-        if len(parts) != 2:
-            print("Usage: stop_cavity_scan <duration>")
+        if len(parts) != 1:
+            print("Usage: stop_cavity_scan")
             return
-        duration = float(parts[1])
-        scanning = False
-        print(f"Stopping cavity scan for {duration} seconds...")
-        # TODO: Call API to lock the laser
+        record_data.clear()
+        print(f"Stopping cavity scan...")
         pass
 
     elif cmd == 'create_laser':
@@ -78,10 +105,9 @@ def handle_command(command: str):
             return
         laser_id = parts[1]
         frequency = float(parts[2])
-        cavity.add_laser(SimLaser(laser_id, frequency, 1.0))
+        cavity.add_laser(Laser(laser_id, frequency, 1.0))
         
         print(f"Creating laser {laser_id} with frequency {frequency}...")
-        # TODO: Call API to lock the laser
         pass
 
     else:
@@ -130,12 +156,16 @@ def main():
 
     # Plot v_out vs time
     plt.subplot(3, 1, 3)
-    plt.plot(times, vouts, lw=0.5, color='green')
+    plt.plot(times, vouts, lw=0.5, color='green', label='V_out')
+    # Overlay blue points where peaks[i] == 1
+    peak_indices = [i for i, p in enumerate(peaks) if p == 1]
+    plt.scatter([times[i] for i in peak_indices], [vouts[i] for i in peak_indices], color='blue', s=10, label='Peak')
     plt.xlabel("Time (s)")
     plt.ylabel("V_out")
     plt.title("Cavity Output vs Time")
-    plt.ylim(-0.01, 0.1)
+    plt.ylim(-0.01, 0.2)
     plt.grid(True)
+    plt.legend()
 
     plt.tight_layout()
     # plt.savefig("cavityPlot.png")

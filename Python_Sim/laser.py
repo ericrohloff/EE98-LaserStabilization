@@ -1,16 +1,15 @@
 import random
 
+# TODO: make this work
 class LaserController:
-    def __init__(self, id, freq, modifier, drift_range=(1, 1), drift_speed=0.1):
-        pass
+    def __init__(self, laser):
+        self.laser = laser
+    
+    def compute_feedback(self, detected_freq):
+        self.laser.modifier = self.laser.freq / detected_freq
+        
 
-    def sample():
-        pass
-
-    def apply_feedback(self, amount):
-        pass
-
-class SimLaser:
+class Laser:
     def __init__(self, id, freq, modifier):
         self.id = id
         self.freq = freq
@@ -24,3 +23,8 @@ class SimLaser:
         # the order of [5,10]us. Dividing away the time to get a general
         # relationship for wavelength gives [.7125, 1.425] nm
         self.gamma = random.uniform(.7125, 1.425) # random width on 0.7125 to 1.425 nm
+        
+    def drift(self):
+        # chat generated this fix eventually
+        drift_amount = random.uniform(-0.01, 0.01) * self.freq
+        self.freq += drift_amount
