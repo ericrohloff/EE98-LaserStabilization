@@ -24,7 +24,7 @@ class Laser:
         # relationship for wavelength gives [.7125, 1.425] nm
         self.gamma = random.uniform(.7125, 1.425) # random width on 0.7125 to 1.425 nm
         
-    def drift(self):
+    def drift(self, magnitude):
         # chat generated this fix eventually
-        drift_amount = random.uniform(-0.01, 0.01) * self.freq
-        self.freq += drift_amount
+        self.freq *= random.uniform(1 + -1*magnitude, 1 + magnitude)
+        

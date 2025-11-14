@@ -12,6 +12,8 @@ cavity = Cavity(535, 820)  # example cavity range
 cavity_controller = CavityController(cavity)
 vouts = []
 peaks = []
+peakLocs = []
+inSpike = False
 cavity_values = []
 
 BUCKET_SIZE = 10
@@ -19,29 +21,39 @@ BUCKET_SIZE = 10
 peak_bucket = []
 
 def run_simulation():
-    global scanning, BUCKET_SIZE
+    global scanning, BUCKET_SIZE, inSpike
     while not end_sim.is_set():
         if record_data.is_set():
-            # Simulation logic would go here
+                
+            # move cavity position
             cavity.ramp(10, 1e6)  # Example ramp call
             
-            peak_bucket.append(cavity.v_out)
-            peak_bucket.pop(0) if len(peak_bucket) >= BUCKET_SIZE else None
             
-            if cavity_controller.detect_peak(peak_bucket):
-                peaks.append(1)
-            else:
-                peaks.append(0)
+            # peak_bucket.append(cavity.v_out)
+            # peak_bucket.pop(0) if len(peak_bucket) >= BUCKET_SIZE else None
+            
+            # if cavity_controller.detect_peak(peak_bucket):
+            #     peaks.append(1)
+            # else:
+            #     peaks.append(0)
 
             # TODO: Valid peak detection below
-            # currMax = cavity.v_out
-            # currMaxPos = cavity.curr_pos_nm
+            currMax = cavity.v_out
+            currMaxPos = cavity.curr_pos_nm
 
-            # if(cavity.v_out > currMax):
-            #     currMax = cavity.v_out
-            #     currMaxPos = cavity.curr_pas_num
-            
-            # peaks.append()
+            if(inSpike and cavity.v_out > currMax):
+                currMax = cavity.v_out
+                currMaxPos = cavity.curr_pos_nm
+
+            if(cavity.v_out > 0.02 and not inSpike):
+                inSpike = True
+                currMax = cavity.v_out
+                currMaxPos = cavity.curr_pos_nm
+            elif(inSpike and cavity.v_out < 0.02):
+                inSpike = False
+                peaks.append(currMax)
+                peakLocs.append(currMaxPos)
+                currMax = 0
 
             vouts.append(cavity.v_out)
             cavity_values.append(cavity.curr_pos_nm)
@@ -143,7 +155,7 @@ def main():
     plt.xlabel("Cavity Position (nm)")
     plt.ylabel("V_out")
     plt.title("Cavity Output vs Cavity Position")
-    plt.ylim(-0.1, 1.1)
+    plt.ylim(-0.04, 0.2)
     plt.grid(True)
 
     # Plot cavity position vs time
@@ -172,6 +184,8 @@ def main():
     plt.show()
 
     print("Simulation ended.")
+    for i in range(len(peaks)):
+        print("Peak of " + str(peaks[i]) + " at wavelength " + str(peakLocs[i]))
 
 if __name__ == "__main__":
     main()

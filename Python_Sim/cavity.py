@@ -16,10 +16,13 @@ class Cavity:
     
     # call this every time step 
     def ramp(self, ramp_freq, sample_rate):
+
         step = (self.end_wv_nm - self.start_wv_nm) * (ramp_freq / sample_rate)
         self.curr_pos_nm += step
         if self.curr_pos_nm > self.end_wv_nm:
             self.curr_pos_nm = self.start_wv_nm
+            for l in self.lasers:
+                l.drift(0.01) # drift lasers by 1% of their frequency
 
         self.v_out = 0
 
