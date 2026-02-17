@@ -4,7 +4,7 @@ import random
 import pandas as pd
 from cavity import Cavity
 from laser import Laser
-from detectors import SimpleThresholdDetector
+from detectors import SimpleThresholdDetector, PDHPeakDetector
 from controllers import PID
 
 
@@ -22,9 +22,10 @@ class Simulation:
         self.laser = Laser("Laser1", 650.0)  # Start at 650nm
         self.cavity.add_laser(self.laser)
 
-        self.detector = SimpleThresholdDetector(threshold=0.02)
+        self.detector = PDHPeakDetector(threshold=0.02)
 
         # Integral Controller
+
         # Kp=0, Ki=50.0, Kd=0 (Tune Ki for performance)
         # Limits +/- 1V
         # Setpoint is the target wavelength (e.g., 650.0 nm)
@@ -82,6 +83,7 @@ class Simulation:
             # A segment ends when we go Low -> High
 
             self.real_scan_segments = []
+            candidates = []
 
             segment_start_idx = -1
 
@@ -94,28 +96,35 @@ class Simulation:
                         # Segment ended
                         segment_end_idx = i
                         # Store segment
-                        # Only keep segments that are long enough to be valid scans
-                        if (segment_end_idx - segment_start_idx) > 10:
-                            self.real_scan_segments.append(
-                                {
-                                    "time": time_col[segment_start_idx:segment_end_idx],
-                                    "signal": signal_col[
-                                        segment_start_idx:segment_end_idx
-                                    ],
-                                }
-                            )
+                        # We will collect all candidates first, then filter
+                        candidates.append(
+                            {
+                                "time": time_col[segment_start_idx:segment_end_idx],
+                                "signal": signal_col[segment_start_idx:segment_end_idx],
+                            }
+                        )
                         segment_start_idx = -1
 
             # Handle case where file ends during a segment
             if segment_start_idx != -1:
-                self.real_scan_segments.append(
+                candidates.append(
                     {
                         "time": time_col[segment_start_idx:],
                         "signal": signal_col[segment_start_idx:],
                     }
                 )
 
-            print(f"Loaded {len(self.real_scan_segments)} scan segments from data.")
+            # Filter segments: Keep only those that are close to the maximum length found
+            # This avoids partial scans at start/end of file
+            if candidates:
+                max_len = max(len(c["signal"]) for c in candidates)
+                self.real_scan_segments = [
+                    c for c in candidates if len(c["signal"]) > 0.8 * max_len
+                ]
+
+            print(
+                f"Loaded {len(self.real_scan_segments)} valid scan segments from data (filtered from {len(candidates)})."
+            )
 
         except Exception as e:
             print(f"Error loading data: {e}")

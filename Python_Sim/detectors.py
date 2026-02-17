@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import numpy as np
 
 
 class PeakDetector(ABC):
@@ -56,3 +57,36 @@ class SimpleThresholdDetector(PeakDetector):
 
         # Return only positions
         return [p[0] for p in candidates]
+
+
+class PDHPeakDetector(PeakDetector):
+    """
+    Peak detector that finds the single highest peak in the scan.
+    """
+
+    def __init__(self, threshold=0.01):
+        self.threshold = threshold
+
+    def detect_peaks(self, cavity_output, cavity_positions):
+        """
+        Detect the highest peak in the scan.
+
+        Args:
+            cavity_output (array): Laser signal (e.g., CH3 - photodiode output).
+            cavity_positions (array): Wavelength positions.
+
+        Returns:
+            list: List containing the position of the highest peak, or empty if no peak above threshold.
+        """
+        if len(cavity_output) == 0:
+            return []
+
+        # Find the highest point in the region
+        max_idx = np.argmax(cavity_output)
+        max_height = cavity_output[max_idx]
+
+        # Only keep if above noise threshold
+        if max_height > self.threshold:
+            return [cavity_positions[max_idx]]
+
+        return []
