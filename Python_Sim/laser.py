@@ -16,7 +16,7 @@ class Laser:
         self.base_wavelength = wavelength
         self.drift_offset = 0.0
         self.control_voltage = 0.0
-        self.sensitivity = 0.5  # nm/V, adjust sensitivity as needed
+        self.sensitivity = 3  # nm/V, adjust sensitivity as needed
         self.modifier = modifier
 
         self.target_wavelength = wavelength  # Default target to initial wavelength

@@ -30,7 +30,7 @@ class Simulation:
         # Limits +/- 1V
         # Setpoint is the target wavelength (e.g., 650.0 nm)
         self.pid = PID(
-            Kp=0.0,
+            Kp=0,
             Ki=50.0,
             Kd=0.0,
             setpoint=self.laser.target_wavelength,
@@ -192,7 +192,7 @@ class Simulation:
         for i in range(self.steps):
             # 1. Physics: Laser Drifts
             # Drift is random walk.
-            self.laser.drift(magnitude=0.005)
+            self.laser.drift(magnitude=0.2)
 
             # 2. Physics: Perform Scan
             scan_output, scan_range = self.perform_scan()
