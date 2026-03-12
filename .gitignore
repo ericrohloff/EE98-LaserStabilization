@@ -12,3 +12,4 @@ vivado.jou
 vivado.log
 .Xil
 vivado_pid*.str
+*.ghw
