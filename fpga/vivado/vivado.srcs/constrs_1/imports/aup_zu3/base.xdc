@@ -107,7 +107,8 @@ set_property IOSTANDARD LVCMOS12 [get_ports PL_USER_SW*]
 set_property PACKAGE_PIN J12 [get_ports {iop_pmod0[0]}]
 set_property PACKAGE_PIN H12 [get_ports {iop_pmod0[1]}]
 set_property PACKAGE_PIN H11 [get_ports {iop_pmod0[2]}]
-set_property PACKAGE_PIN G10 [get_ports {iop_pmod0[3]}]
+#set_property PACKAGE_PIN G10 [get_ports {iop_pmod0[3]}]
+set_property PACKAGE_PIN G10 [get_ports {clk_output}]
 set_property PACKAGE_PIN K13 [get_ports {iop_pmod0[4]}]
 set_property PACKAGE_PIN K12 [get_ports {iop_pmod0[5]}]
 set_property PACKAGE_PIN J11 [get_ports {iop_pmod0[6]}]
@@ -143,6 +144,7 @@ set_property PULLUP true [get_ports {iop_pmod1[7]}]
 ## Rasbery PI Headers
 ################################################################################
 set_property PACKAGE_PIN AF10 [get_ports {iop_rpi0[0]}]
+#set_property PACKAGE_PIN AF10 [get_ports clk_out1_0]
 set_property PACKAGE_PIN AG10 [get_ports {iop_rpi0[1]}]
 set_property PACKAGE_PIN AC12 [get_ports {iop_rpi0[2]}]
 set_property PACKAGE_PIN AD12 [get_ports {iop_rpi0[3]}]
@@ -164,6 +166,7 @@ set_property PACKAGE_PIN AC11 [get_ports {iop_rpi0[18]}]
 set_property PACKAGE_PIN AB9 [get_ports {iop_rpi0[19]}]
 set_property PACKAGE_PIN AA10 [get_ports {iop_rpi0[20]}]
 set_property PACKAGE_PIN Y9 [get_ports {iop_rpi0[21]}]
+#set_property PACKAGE_PIN Y9 [get_ports {clk_output}]
 set_property PACKAGE_PIN AH13 [get_ports {iop_rpi0[22]}]
 set_property PACKAGE_PIN AG13 [get_ports {iop_rpi0[23]}]
 set_property PACKAGE_PIN AF12 [get_ports {iop_rpi0[24]}]
@@ -175,6 +178,9 @@ set_property PULLUP TRUE [get_ports {iop_rpi0[17]}];
 set_property PULLUP TRUE [get_ports {iop_rpi0[18]}]; 
 
 set_property IOSTANDARD LVCMOS33 [get_ports {iop_rpi0[*]}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {clk_output}]; 
+set_property SLEW FAST [get_ports {clk_output}]; 
+set_property DRIVE 12 [get_ports {clk_output}];
 
     
 ################################################################################

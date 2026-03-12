@@ -55,10 +55,10 @@
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_DOUT_DEFAULT">0x00000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_DOUT_DEFAULT_2">0x00000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_FAMILY">zynquplus</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_GPIO2_WIDTH">32</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_GPIO2_WIDTH">28</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_GPIO_WIDTH">8</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_INTERRUPT_PRESENT">0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_IS_DUAL">0</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_IS_DUAL">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_TRI_DEFAULT">0xFFFFFFFF</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="MODELPARAM_VALUE.C_TRI_DEFAULT_2">0xFFFFFFFF</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_ALL_INPUTS">0</spirit:configurableElementValue>
@@ -67,10 +67,10 @@
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_ALL_OUTPUTS_2">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_DOUT_DEFAULT">0x00000000</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_DOUT_DEFAULT_2">0x00000000</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_GPIO2_WIDTH">32</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_GPIO2_WIDTH">28</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_GPIO_WIDTH">8</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_INTERRUPT_PRESENT">0</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_IS_DUAL">0</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_IS_DUAL">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_TRI_DEFAULT">0xFFFFFFFF</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.C_TRI_DEFAULT_2">0xFFFFFFFF</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.Component_Name">design_1_axi_gpio_0_0</spirit:configurableElementValue>
@@ -164,7 +164,10 @@
                   &quot;s_axi_rresp&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;1&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;s_axi_rvalid&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
                   &quot;s_axi_rready&quot;: [ { &quot;direction&quot;: &quot;in&quot;, &quot;driver_value&quot;: &quot;0&quot; } ],
-                  &quot;gpio_io_o&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;7&quot;, &quot;size_right&quot;: &quot;0&quot; } ]
+                  &quot;gpio_io_o&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;7&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
+                  &quot;gpio2_io_i&quot;: [ { &quot;direction&quot;: &quot;in&quot;, &quot;size_left&quot;: &quot;27&quot;, &quot;size_right&quot;: &quot;0&quot;, &quot;driver_value&quot;: &quot;0&quot; } ],
+                  &quot;gpio2_io_o&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;27&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
+                  &quot;gpio2_io_t&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;27&quot;, &quot;size_right&quot;: &quot;0&quot; } ]
                 },
                 &quot;interfaces&quot;: {
                   &quot;S_AXI&quot;: {
@@ -265,6 +268,19 @@
                     &quot;port_maps&quot;: {
                       &quot;TRI_O&quot;: [ { &quot;physical_name&quot;: &quot;gpio_io_o&quot; } ]
                     }
+                  },
+                  &quot;GPIO2&quot;: {
+                    &quot;vlnv&quot;: &quot;xilinx.com:interface:gpio:1.0&quot;,
+                    &quot;abstraction_type&quot;: &quot;xilinx.com:interface:gpio_rtl:1.0&quot;,
+                    &quot;mode&quot;: &quot;master&quot;,
+                    &quot;parameters&quot;: {
+                      &quot;BOARD.ASSOCIATED_PARAM&quot;: [ { &quot;value&quot;: &quot;GPIO2_BOARD_INTERFACE&quot;, &quot;value_src&quot;: &quot;constant&quot;, &quot;value_permission&quot;: &quot;bd&quot;, &quot;usage&quot;: &quot;all&quot; } ]
+                    },
+                    &quot;port_maps&quot;: {
+                      &quot;TRI_I&quot;: [ { &quot;physical_name&quot;: &quot;gpio2_io_i&quot; } ],
+                      &quot;TRI_O&quot;: [ { &quot;physical_name&quot;: &quot;gpio2_io_o&quot; } ],
+                      &quot;TRI_T&quot;: [ { &quot;physical_name&quot;: &quot;gpio2_io_t&quot; } ]
+                    }
                   }
                 },
                 &quot;memory_maps&quot;: {
@@ -320,7 +336,7 @@
                           },
                           &quot;GPIO2_DATA&quot;: {
                             &quot;address_offset&quot;: &quot;0x8&quot;,
-                            &quot;size&quot;: 32,
+                            &quot;size&quot;: 28,
                             &quot;display_name&quot;: &quot;Channel_2_GPIO_DATA&quot;,
                             &quot;description&quot;: &quot;Channel-2 AXI GPIO Data register&quot;,
                             &quot;is_volatile&quot;: true,
@@ -329,7 +345,7 @@
                             &quot;fields&quot;: {
                               &quot;Channel_2_GPIO_DATA&quot;: {
                                 &quot;bit_offset&quot;: 0,
-                                &quot;bit_width&quot;: 32,
+                                &quot;bit_width&quot;: 28,
                                 &quot;display_name&quot;: &quot;Channel_2_GPIO_DATA&quot;,
                                 &quot;description&quot;: &quot;AXI GPIO Data Register.\nFor each I/O bit programmed as input\n  R - Reads value on the input pin.\n  W - No effect.\nFor each I/O bit programmed as output\n  R - Reads value on GPIO_O pins\n  W - Writes value to the corresponding AXI GPIO \n      data register bit and output pin\n&quot;,
                                 &quot;is_volatile&quot;: true,
@@ -339,7 +355,7 @@
                           },
                           &quot;GPIO2_TRI&quot;: {
                             &quot;address_offset&quot;: &quot;0xC&quot;,
-                            &quot;size&quot;: 32,
+                            &quot;size&quot;: 28,
                             &quot;display_name&quot;: &quot;Channel_2_GPIO_TRI&quot;,
                             &quot;description&quot;: &quot;Channel-2 AXI GPIO 3-State Control register&quot;,
                             &quot;is_volatile&quot;: true,
@@ -348,7 +364,7 @@
                             &quot;fields&quot;: {
                               &quot;Channel_2_GPIO_TRI&quot;: {
                                 &quot;bit_offset&quot;: 0,
-                                &quot;bit_width&quot;: 32,
+                                &quot;bit_width&quot;: 28,
                                 &quot;display_name&quot;: &quot;Channel_2_GPIO_DATA&quot;,
                                 &quot;description&quot;: &quot;AXI GPIO 3-State Control Register\nEach I/O pin of the AXI GPIO is individually programmable as an input or output   For each of the bits     0 - I/O pin configured as output     1 - I/O pin configured as input\n&quot;,
                                 &quot;is_volatile&quot;: true,
