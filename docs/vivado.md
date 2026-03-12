@@ -1,3 +1,6 @@
+# Using vivado on linux
+Run `use xilinx.2022` to get the `xilinx` command. Run `xilinx PROJECT_NAME.xpr` to open the GUI.
+
 # Creating a project
 
 Adapted from this: https://rfsoc.mit.edu/6S965/F24/assignments/week01/pynq_01
