@@ -12,9 +12,14 @@ module ramp_dac_spi (
     output logic        ramp_dac_cs_n,
     output logic        ramp_dac_sck,
     output logic        ramp_dac_mosi,
+    output logic        ramp_dac_ldac_n,
     output logic [15:0] current_ramp_pos,
     output logic        ramp_cycle_start
 );
+
+    localparam logic [6:0] DAC_SHIFT_END_TICK = 7'd31;
+    localparam logic [6:0] LDAC_LOW_START_TICK = 7'd33;
+    localparam logic [6:0] LDAC_LOW_END_TICK = 7'd36;
 
     logic [15:0] tx_word;
     logic        ramp_dir_up;
@@ -73,8 +78,9 @@ module ramp_dac_spi (
         end
     end
 
-    assign ramp_dac_cs_n = !(enable && (frame_tick <= 7'd49));
-    assign ramp_dac_sck  = (enable && (frame_tick <= 7'd31)) ? frame_tick[0] : 1'b0;
+    assign ramp_dac_cs_n = !(enable && (frame_tick <= DAC_SHIFT_END_TICK));
+    assign ramp_dac_sck  = enable ? frame_tick[0] : 1'b0;
     assign ramp_dac_mosi = tx_word[15];
+    assign ramp_dac_ldac_n = !(enable && (frame_tick >= LDAC_LOW_START_TICK) && (frame_tick <= LDAC_LOW_END_TICK));
 
 endmodule

@@ -12,6 +12,7 @@ module ramp_dac_spi_wrapper (
     output wire        ramp_dac_cs_n,
     output wire        ramp_dac_sck,
     output wire        ramp_dac_mosi,
+    output wire        ramp_dac_ldac_n,
     output wire [15:0] current_ramp_pos,
     output wire        ramp_cycle_start
 );
@@ -28,6 +29,7 @@ module ramp_dac_spi_wrapper (
         .ramp_dac_cs_n(ramp_dac_cs_n),
         .ramp_dac_sck(ramp_dac_sck),
         .ramp_dac_mosi(ramp_dac_mosi),
+        .ramp_dac_ldac_n(ramp_dac_ldac_n),
         .current_ramp_pos(current_ramp_pos),
         .ramp_cycle_start(ramp_cycle_start)
     );

@@ -11,6 +11,7 @@ module ramp_dac_bringup (
     output logic        ramp_dac_cs_n,
     output logic        ramp_dac_sck,
     output logic        ramp_dac_mosi,
+    output logic        ramp_dac_ldac_n,
     input  logic        adc_miso,
     output logic        adc_cnv,
     output logic        adc_sck,
@@ -53,6 +54,7 @@ module ramp_dac_bringup (
         .ramp_dac_cs_n(ramp_dac_cs_n),
         .ramp_dac_sck(ramp_dac_sck),
         .ramp_dac_mosi(ramp_dac_mosi),
+        .ramp_dac_ldac_n(ramp_dac_ldac_n),
         .current_ramp_pos(current_ramp_pos),
         .ramp_cycle_start(ramp_cycle_start)
     );
@@ -85,6 +87,7 @@ module ramp_dac_bringup_tb;
     logic       ramp_dac_cs_n;
     logic       ramp_dac_sck;
     logic       ramp_dac_mosi;
+    logic       ramp_dac_ldac_n;
     logic       adc_miso;
     logic       adc_cnv;
     logic       adc_sck;
@@ -124,6 +127,7 @@ module ramp_dac_bringup_tb;
         .ramp_dac_cs_n(ramp_dac_cs_n),
         .ramp_dac_sck(ramp_dac_sck),
         .ramp_dac_mosi(ramp_dac_mosi),
+        .ramp_dac_ldac_n(ramp_dac_ldac_n),
         .adc_miso(adc_miso),
         .adc_cnv(adc_cnv),
         .adc_sck(adc_sck),
@@ -155,24 +159,28 @@ module ramp_dac_bringup_tb;
         end
 
         if (!reset && checks_active) begin
-            if (frame_tick <= 7'd49) begin
+            if (frame_tick <= 7'd31) begin
                 if (ramp_dac_cs_n !== 1'b0) begin
-                    $error("CS should be low in ticks 0..49, tick=%0d", frame_tick);
+                    $error("CS should be low in ticks 0..31, tick=%0d", frame_tick);
                 end
             end else begin
                 if (ramp_dac_cs_n !== 1'b1) begin
-                    $error("CS should be high in ticks 50..99, tick=%0d", frame_tick);
+                    $error("CS should be high in ticks 32..99, tick=%0d", frame_tick);
                 end
             end
 
-            if (frame_tick <= 7'd31) begin
-                if (ramp_dac_sck !== frame_tick[0]) begin
-                    $error("SCK mismatch in shift window at tick=%0d", frame_tick);
+            if ((frame_tick >= 7'd33) && (frame_tick <= 7'd36)) begin
+                if (ramp_dac_ldac_n !== 1'b0) begin
+                    $error("LDAC should be low in ticks 33..36, tick=%0d", frame_tick);
                 end
             end else begin
-                if (ramp_dac_sck !== 1'b0) begin
-                    $error("SCK should be idle low outside shift window, tick=%0d", frame_tick);
+                if (ramp_dac_ldac_n !== 1'b1) begin
+                    $error("LDAC should be high outside ticks 33..36, tick=%0d", frame_tick);
                 end
+            end
+
+            if (ramp_dac_sck !== frame_tick[0]) begin
+                $error("SCK should free-run with frame_tick[0], tick=%0d", frame_tick);
             end
 
             if (frame_tick <= 7'd49) begin
