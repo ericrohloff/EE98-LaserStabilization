@@ -104,9 +104,12 @@ set_property IOSTANDARD LVCMOS12 [get_ports PL_USER_SW*]
 ################################################################################
 ## PMODS (22 pins)
 ################################################################################
-set_property PACKAGE_PIN J12 [get_ports {iop_pmod0[0]}]
-set_property PACKAGE_PIN H12 [get_ports {iop_pmod0[1]}]
-set_property PACKAGE_PIN H11 [get_ports {iop_pmod0[2]}]
+#set_property PACKAGE_PIN J12 [get_ports {iop_pmod0[0]}]
+set_property PACKAGE_PIN J12 [get_ports {dac_cs}]
+#set_property PACKAGE_PIN H12 [get_ports {iop_pmod0[1]}]
+set_property PACKAGE_PIN H12 [get_ports {dac_mosi}]
+#set_property PACKAGE_PIN H11 [get_ports {iop_pmod0[2]}]
+set_property PACKAGE_PIN H11 [get_ports {dac_ldac_n}]
 #set_property PACKAGE_PIN G10 [get_ports {iop_pmod0[3]}]
 set_property PACKAGE_PIN G10 [get_ports {clk_output}]
 set_property PACKAGE_PIN K13 [get_ports {iop_pmod0[4]}]
@@ -116,6 +119,7 @@ set_property PACKAGE_PIN J10 [get_ports {iop_pmod0[7]}]
 set_property IOSTANDARD LVCMOS33 [get_ports iop_pmod0*]
 set_property PULLUP true [get_ports {iop_pmod0[2]}]
 set_property PULLUP true [get_ports {iop_pmod0[3]}]
+set_property PULLUP true [get_ports {clk_output}]
 set_property PULLUP true [get_ports {iop_pmod0[6]}]
 set_property PULLUP true [get_ports {iop_pmod0[7]}]
 
@@ -178,9 +182,13 @@ set_property PULLUP TRUE [get_ports {iop_rpi0[17]}];
 set_property PULLUP TRUE [get_ports {iop_rpi0[18]}]; 
 
 set_property IOSTANDARD LVCMOS33 [get_ports {iop_rpi0[*]}]; 
-set_property IOSTANDARD LVCMOS33 [get_ports {clk_output}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {clk_output}];
+set_property IOSTANDARD LVCMOS33 [get_ports {dac_cs}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {dac_ldac_n}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {dac_mosi}]; 
+
 set_property SLEW FAST [get_ports {clk_output}]; 
-set_property DRIVE 12 [get_ports {clk_output}];
+set_property DRIVE 16 [get_ports {clk_output}];
 
     
 ################################################################################
