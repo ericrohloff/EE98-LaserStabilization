@@ -6,8 +6,8 @@
   <spirit:version>1.0</spirit:version>
   <spirit:componentInstances>
     <spirit:componentInstance>
-      <spirit:instanceName>design_1_global_timing_sequen_0_0</spirit:instanceName>
-      <spirit:componentRef spirit:vendor="xilinx.com" spirit:library="module_ref" spirit:name="global_timing_sequencer_wrapper" spirit:version="1.0"/>
+      <spirit:instanceName>design_1_adc_frontend_wrapper_0_0</spirit:instanceName>
+      <spirit:componentRef spirit:vendor="xilinx.com" spirit:library="module_ref" spirit:name="adc_frontend_wrapper" spirit:version="1.0"/>
       <spirit:configurableElementValues>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLK.ASSOCIATED_BUSIF"/>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLK.ASSOCIATED_PORT"/>
@@ -18,7 +18,7 @@
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.CLK.PHASE">0.0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.RESET.INSERT_VIP">0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="BUSIFPARAM_VALUE.RESET.POLARITY">ACTIVE_HIGH</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.Component_Name">design_1_global_timing_sequen_0_0</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="PARAM_VALUE.Component_Name">design_1_adc_frontend_wrapper_0_0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PROJECT_PARAM.ARCHITECTURE">zynquplus</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PROJECT_PARAM.BASE_BOARD_PART">realdigital.org:aup-zu3-4gb:part0:1.0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PROJECT_PARAM.BOARD_CONNECTIONS"/>
@@ -35,7 +35,7 @@
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.IPCONTEXT">IP_Integrator</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.IPREVISION">1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.MANAGED">TRUE</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.OUTPUTDIR">../../../../../../vivado.gen/sources_1/bd/design_1/ip/design_1_global_timing_sequen_0_0</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.OUTPUTDIR">../../../../../../vivado.gen/sources_1/bd/design_1/ip/design_1_adc_frontend_wrapper_0_0</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.SELECTEDSIMMODEL"/>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.SHAREDDIR">../../ipshared</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.SWVERSION">2022.1</spirit:configurableElementValue>
@@ -60,13 +60,12 @@
                   &quot;clk&quot;: [ { &quot;direction&quot;: &quot;in&quot; } ],
                   &quot;reset&quot;: [ { &quot;direction&quot;: &quot;in&quot; } ],
                   &quot;enable&quot;: [ { &quot;direction&quot;: &quot;in&quot; } ],
-                  &quot;frame_tick&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;6&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
-                  &quot;frame_start&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
-                  &quot;frame_boundary&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
-                  &quot;phase_0_31&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
-                  &quot;phase_32_49&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
-                  &quot;phase_50_81&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
-                  &quot;phase_82_98&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ]
+                  &quot;frame_tick&quot;: [ { &quot;direction&quot;: &quot;in&quot;, &quot;size_left&quot;: &quot;6&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
+                  &quot;adc_miso&quot;: [ { &quot;direction&quot;: &quot;in&quot; } ],
+                  &quot;adc_cnv&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;adc_sck&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;adc_sample_unsigned&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
+                  &quot;adc_sample_valid&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ]
                 },
                 &quot;interfaces&quot;: {
                   &quot;reset&quot;: {

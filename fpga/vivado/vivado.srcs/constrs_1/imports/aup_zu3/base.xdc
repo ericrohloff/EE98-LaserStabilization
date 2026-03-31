@@ -123,10 +123,13 @@ set_property PULLUP true [get_ports {clk_output}]
 set_property PULLUP true [get_ports {iop_pmod0[6]}]
 set_property PULLUP true [get_ports {iop_pmod0[7]}]
 
-set_property PACKAGE_PIN E12 [get_ports {iop_pmod1[0]}]
+#set_property PACKAGE_PIN E12 [get_ports {iop_pmod1[0]}]
+#set_property PACKAGE_PIN B11 [get_ports {iop_pmod1[2]}]
+#set_property PACKAGE_PIN A10 [get_ports {iop_pmod1[3]}]
+set_property PACKAGE_PIN E12 [get_ports {adc_cnv}]
 set_property PACKAGE_PIN D11 [get_ports {iop_pmod1[1]}]
-set_property PACKAGE_PIN B11 [get_ports {iop_pmod1[2]}]
-set_property PACKAGE_PIN A10 [get_ports {iop_pmod1[3]}]
+set_property PACKAGE_PIN B11 [get_ports {adc_miso}]
+set_property PACKAGE_PIN A10 [get_ports {adc_sck}]
 set_property PACKAGE_PIN C11 [get_ports {iop_pmod1[4]}]
 set_property PACKAGE_PIN B10 [get_ports {iop_pmod1[5]}]
 set_property PACKAGE_PIN A12 [get_ports {iop_pmod1[6]}]
@@ -185,7 +188,10 @@ set_property IOSTANDARD LVCMOS33 [get_ports {iop_rpi0[*]}];
 set_property IOSTANDARD LVCMOS33 [get_ports {clk_output}];
 set_property IOSTANDARD LVCMOS33 [get_ports {dac_cs}]; 
 set_property IOSTANDARD LVCMOS33 [get_ports {dac_ldac_n}]; 
-set_property IOSTANDARD LVCMOS33 [get_ports {dac_mosi}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {dac_mosi}];
+set_property IOSTANDARD LVCMOS33 [get_ports {adc_sck}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {adc_miso}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {adc_cnv}]; 
 
 set_property SLEW FAST [get_ports {clk_output}]; 
 set_property DRIVE 16 [get_ports {clk_output}];
