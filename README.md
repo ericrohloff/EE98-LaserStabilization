@@ -36,4 +36,5 @@ In quantum computing, laser frequency and intensity stability are critical. Even
 + Josh Wilkie
 
 **Acknowledgments**
+
 Special thanks to Professor Mark Hempstead and the University of Syndey Quantum Science Group for their support and sponsorship.
