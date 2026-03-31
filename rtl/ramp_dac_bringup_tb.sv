@@ -193,14 +193,8 @@ module ramp_dac_bringup_tb;
                 end
             end
 
-            if ((frame_tick >= 7'd50) && (frame_tick <= 7'd81)) begin
-                if (adc_sck !== frame_tick[0]) begin
-                    $error("ADC SCK mismatch in shift window at tick=%0d", frame_tick);
-                end
-            end else begin
-                if (adc_sck !== 1'b0) begin
-                    $error("ADC SCK should be idle low outside shift window, tick=%0d", frame_tick);
-                end
+            if (adc_sck !== frame_tick[0]) begin
+                $error("ADC SCK should free-run with frame_tick[0], tick=%0d", frame_tick);
             end
 
             if (adc_sample_valid) begin
@@ -270,9 +264,9 @@ module ramp_dac_bringup_tb;
         reset         = 1'b1;
         enable        = 1'b0;
         triangle_mode = 1'b0;
-        ramp_step     = 16'd3;
-        ramp_min      = 16'd10;
-        ramp_max      = 16'd22;
+        ramp_step     = 16'd1024;
+        ramp_min      = 16'd0;
+        ramp_max      = 16'd63000;
         adc_miso      = 1'b0;
         shifted_word  = 16'h0000;
         adc_shift_word = 16'h0000;

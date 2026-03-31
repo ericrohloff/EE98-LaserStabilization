@@ -42,6 +42,6 @@ module adc_frontend (
     end
 
     assign adc_cnv = (enable && (frame_tick <= 7'd49));
-    assign adc_sck = (enable && (frame_tick >= 7'd50) && (frame_tick <= 7'd81)) ? frame_tick[0] : 1'b0;
+    assign adc_sck = enable ? frame_tick[0] : 1'b0;
 
 endmodule
