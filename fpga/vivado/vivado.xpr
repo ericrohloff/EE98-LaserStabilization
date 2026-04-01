@@ -149,14 +149,6 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
-      <File Path="$PPRDIR/../ip_repo/axi_registers_1.0/example_designs/bfm_design/axi_registers_v1_0_tb.sv">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PPRDIR/../ip_repo/axi_registers_1.0/hdl/axi_registers_v1_0_S00_AXI.v">
         <FileInfo>
           <Attr Name="AutoDisabled" Val="1"/>

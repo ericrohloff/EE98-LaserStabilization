@@ -4025,16 +4025,11 @@
           "adc_frontend_wrapper_0/clk"
         ]
       },
-      "global_timing_sequen_0_frame_start": {
-        "ports": [
-          "global_timing_sequen_0/frame_start",
-          "adc_frontend_wrapper_0/frame_tick"
-        ]
-      },
       "global_timing_sequen_0_frame_tick": {
         "ports": [
           "global_timing_sequen_0/frame_tick",
-          "ramp_dac_spi_wrapper_0/frame_tick"
+          "ramp_dac_spi_wrapper_0/frame_tick",
+          "adc_frontend_wrapper_0/frame_tick"
         ]
       },
       "proc_sys_reset_0_peripheral_aresetn": {
