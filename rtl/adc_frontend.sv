@@ -11,8 +11,8 @@ module adc_frontend (
     output logic        adc_sample_valid
 );
 
-    localparam CNV_START = 7'd10;
-    localparam CNV_END   = 7'd49;
+    localparam CNV_START = 7'd0;
+    localparam CNV_END   = 7'd59;
     localparam FRAME_LEN = 7'd100;
     localparam CAPTURE   = CNV_END + 7'd35;
     localparam VALID     = FRAME_LEN - 7'd1;
@@ -21,7 +21,7 @@ module adc_frontend (
     logic        sck_prev;
 
     assign adc_cnv = enable && (frame_tick >= CNV_START) && (frame_tick <= CNV_END);
-    assign adc_sck = enable && (frame_tick > (CNV_END + 2)) ? frame_tick[0] : 1'b0;
+    assign adc_sck = enable && (frame_tick > (CNV_END + 2) && (frame_tick < CNV_END + 7'd35)) ? frame_tick[0] : 1'b0;
 
     always_ff @(posedge clk or posedge reset) begin
         if (reset) begin
