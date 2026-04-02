@@ -31,8 +31,8 @@
       "spi_enable": "",
       "proc_sys_reset_1": "",
       "ramp_dac_spi_wrapper_0": "",
-      "adc_frontend_wrapper_0": "",
-      "axi_registers_0": ""
+      "axi_registers_0": "",
+      "adc_frontend_wrapper_0": ""
     },
     "interface_ports": {
       "led_8bits": {
@@ -3876,6 +3876,12 @@
           }
         }
       },
+      "axi_registers_0": {
+        "vlnv": "user.org:user:axi_registers:1.0",
+        "xci_name": "design_1_axi_registers_0_0",
+        "xci_path": "ip/design_1_axi_registers_0_0/design_1_axi_registers_0_0.xci",
+        "inst_hier_path": "axi_registers_0"
+      },
       "adc_frontend_wrapper_0": {
         "vlnv": "xilinx.com:module_ref:adc_frontend_wrapper:1.0",
         "xci_name": "design_1_adc_frontend_wrapper_0_0",
@@ -3951,12 +3957,6 @@
             "direction": "O"
           }
         }
-      },
-      "axi_registers_0": {
-        "vlnv": "user.org:user:axi_registers:1.0",
-        "xci_name": "design_1_axi_registers_0_0",
-        "xci_path": "ip/design_1_axi_registers_0_0/design_1_axi_registers_0_0.xci",
-        "inst_hier_path": "axi_registers_0"
       }
     },
     "interface_nets": {
