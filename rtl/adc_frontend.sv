@@ -14,14 +14,14 @@ module adc_frontend (
     localparam CNV_START = 7'd10;
     localparam CNV_END   = 7'd49;
     localparam FRAME_LEN = 7'd100;
-    localparam CAPTURE   = CNV_END + 7'd33;
+    localparam CAPTURE   = CNV_END + 7'd35;
     localparam VALID     = FRAME_LEN - 7'd1;
 
     logic [15:0] adc_shift_reg;
     logic        sck_prev;
 
     assign adc_cnv = enable && (frame_tick >= CNV_START) && (frame_tick <= CNV_END);
-    assign adc_sck = enable ? frame_tick[0] : 1'b0;
+    assign adc_sck = enable && (frame_tick > (CNV_END + 2)) ? frame_tick[0] : 1'b0;
 
     always_ff @(posedge clk or posedge reset) begin
         if (reset) begin
