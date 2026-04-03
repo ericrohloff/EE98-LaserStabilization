@@ -1,40 +1,58 @@
-# lock(laser_id) : Apply feedback to the laser “laser_id”
-# unlock(laser_id) : Stop applying feedback to the laser “laser_id”
-# start_cavity_scan(): Start scanning the cavity by applying the triangular ramp
-# stop_cavity_scan(): Stop scanning the cavity by stopping output of triangular ramp
+# api.py
+# Canonical FPGA interface — delegates to software/pynq_controller.py
+#
+# Commands supported:
+#   createLaser(pid)                   -> PYNQController.create_laser(pid)
+#   lock(pid, wavelength)              -> PYNQController.lock_laser(pid, wavelength)
+#   unlock(pid)                        -> PYNQController.unlock_laser(pid)
+#   start_cavity_scan(duration)        -> PYNQController.start_cavity(duration)
+#   stop_cavity_scan()                 -> PYNQController.stop_cavity()
 
-from laser import SimLaser
-from cavity import Cavity
+import pathlib
+import sys
+
+# Add software/ to path so pynq_controller can be imported from anywhere
+_software_dir = pathlib.Path(__file__).parents[2] / "software"
+sys.path.insert(0, str(_software_dir))
+
+from pynq_controller import PYNQController, CommandType  # noqa: F401
 
 
 class InterfaceAPI:
+    """
+    Thin wrapper around PYNQController that maps the original sim API surface
+    to the TCP-based FPGA controller.
 
-    def __init__(self):
-        self.cavity = Cavity(535, 820)  # example cavity range
+    Parameters
+    ----------
+    server_ip   : IP address of the PYNQ board.
+    server_port : TCP port the PYNQ board is listening on.
+    """
 
-    def createLaser(self, laser_id):
+    def __init__(self, server_ip: str, server_port: int) -> None:
+        self._ctrl = PYNQController(server_ip=server_ip, server_port=server_port)
+        self._ctrl.connect()
 
-        new_laser = SimLaser(laser_id, freq, modifier=1.0)
-        self.cavity.add_laser(new_laser)
+    def createLaser(self, pid: int) -> bool:
+        return self._ctrl.create_laser(pid)
 
-        
-        pass
+    def lock(self, pid: int, wavelength: float) -> bool:
+        return self._ctrl.lock_laser(pid, wavelength)
 
-    def lock(laser_id):
-        # Apply feedback to the laser "laser_id"
+    def unlock(self, pid: int) -> bool:
+        return self._ctrl.unlock_laser(pid)
 
-        pass
+    def start_cavity_scan(self, duration: float) -> bool:
+        return self._ctrl.start_cavity(duration)
 
-    def unlock(laser_id):
-        # Stop applying feedback
+    def stop_cavity_scan(self) -> bool:
+        return self._ctrl.stop_cavity()
 
-        pass
+    def disconnect(self) -> None:
+        self._ctrl.disconnect()
 
-    def start_cavity_scan(duration):
-        # Apply triangular ramp to cavity
-        # duration in seconds
-        # based on current DAC sample, have "ADC" input sample calculated from laser freqs
-        pass
+    def __enter__(self) -> "InterfaceAPI":
+        return self
 
-    def stop_cavity_scan(duration):
-        pass
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.disconnect()

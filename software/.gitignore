@@ -1,4 +1,4 @@
-# Ignore everything in this directory
+# Ignore everything in this directory except tracked source files
 *
-# Except this file
 !.gitignore
+!pynq_controller.py
