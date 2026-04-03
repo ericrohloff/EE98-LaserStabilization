@@ -2,7 +2,7 @@
 pynq_controller.py
 ------------------
 Host-side controller for communicating with a PYNQ FPGA board over TCP sockets.
-Handles laser/cavity command serialization, transmission, ACK verification, and logging.
+Uses a fixed-width binary protocol to minimise processing on the PYNQ side.
 
 Usage:
     controller = PYNQController(server_ip="192.168.1.100", server_port=5000)
@@ -17,22 +17,51 @@ Usage:
         ctrl.create_laser(pid=1)
         ctrl.lock_laser(pid=1, wavelength=1550.0)
 
-PYNQ-side ACK format (JSON, newline-terminated):
-    {"status": "ok"}
-    {"status": "error", "message": "<description>"}
+---------------------------------------------------------------------------
+Binary packet format  (21 bytes, big-endian / network byte order)
+---------------------------------------------------------------------------
+
+ Offset  Size  Type     Field    Description
+ ------  ----  -------  -------  ------------------------------------
+   0      1    uint8    cmd_id   Command identifier (see _CMD_ID)
+   1      4    int32    pid      Laser ID (0 if unused)
+   5      8    float64  param1   wavelength (nm) or duration (s)
+  13      8    float64  param2   Reserved (always 0.0)
+ ------
+  21 bytes total
+
+PYNQ-side (Python):
+    CMD_ID, PID, PARAM1, PARAM2 = struct.unpack('!Bidd', data)
+
+---------------------------------------------------------------------------
+ACK format  (1 byte)
+---------------------------------------------------------------------------
+  0x00  OK
+  0x01  Error
 """
 
-import json
 import logging
 import socket
+import struct
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 
 
 # ---------------------------------------------------------------------------
-# Command type definitions
+# Packet constants
+# ---------------------------------------------------------------------------
+
+PACKET_FORMAT = "!Bidd"          # network byte order: uint8, int32, float64, float64
+PACKET_SIZE   = struct.calcsize(PACKET_FORMAT)   # 21 bytes
+
+ACK_OK    = 0x00
+ACK_ERROR = 0x01
+
+
+# ---------------------------------------------------------------------------
+# Command definitions
 # ---------------------------------------------------------------------------
 
 class CommandType(str, Enum):
@@ -42,6 +71,16 @@ class CommandType(str, Enum):
     STOP_CAVITY  = "STOP_CAVITY"
     CREATE_LASER = "CREATE_LASER"
     REMOVE_LASER = "REMOVE_LASER"
+
+# Byte value sent on the wire for each command
+_CMD_ID = {
+    CommandType.LOCK_LASER:   0x01,
+    CommandType.UNLOCK_LASER: 0x02,
+    CommandType.START_CAVITY: 0x03,
+    CommandType.STOP_CAVITY:  0x04,
+    CommandType.CREATE_LASER: 0x05,
+    CommandType.REMOVE_LASER: 0x06,
+}
 
 
 # ---------------------------------------------------------------------------
@@ -53,9 +92,9 @@ class PYNQController:
     Manages a TCP socket connection to a PYNQ FPGA board and exposes
     high-level methods for each supported command.
 
-    After every command the controller reads a JSON ACK from the board:
-        {"status": "ok"}                         -> _send() returns True
-        {"status": "error", "message": "..."}    -> _send() logs the error, returns False
+    Each command is serialised into a 21-byte binary packet and sent over
+    a persistent TCP connection.  After every send the controller reads a
+    1-byte ACK from the board (0x00 = ok, 0x01 = error).
 
     Parameters
     ----------
@@ -85,8 +124,8 @@ class PYNQController:
         self.log_file = log_file
         self._logger  = self._setup_logger(log_file)
         self._logger.info(
-            "PYNQController initialised | target=%s:%d | log=%s",
-            server_ip, server_port, log_file,
+            "PYNQController initialised | target=%s:%d | packet_size=%dB | log=%s",
+            server_ip, server_port, PACKET_SIZE, log_file,
         )
 
     # ------------------------------------------------------------------
@@ -116,58 +155,61 @@ class PYNQController:
         logger.addHandler(ch)
         return logger
 
-    def _build_packet(self, command: CommandType, **kwargs) -> bytes:
+    def _build_packet(
+        self,
+        command: CommandType,
+        pid: int   = 0,
+        param1: float = 0.0,
+        param2: float = 0.0,
+    ) -> bytes:
         """
-        Serialise a command and its parameters to a JSON-encoded byte string.
-        A newline delimiter is appended so the PYNQ side can use readline().
+        Pack a command into a fixed-width binary packet.
 
-        Packet schema:
-        {
-            "command"   : <CommandType value>,
-            "timestamp" : <ISO-8601 UTC string>,
-            "params"    : { <key>: <value>, ... }
-        }
+        Parameters map to fields as follows:
+          LOCK_LASER   : pid=pid,  param1=wavelength_nm
+          UNLOCK_LASER : pid=pid
+          CREATE_LASER : pid=pid
+          REMOVE_LASER : pid=pid
+          START_CAVITY : param1=duration_s
+          STOP_CAVITY  : (no params)
         """
-        payload = {
-            "command":   command.value,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "params":    kwargs,
-        }
-        return (json.dumps(payload) + "\n").encode("utf-8")
+        return struct.pack(PACKET_FORMAT, _CMD_ID[command], pid, param1, param2)
 
-    def _recv_ack(self) -> bool:
+    def _recv_ack(self, command: CommandType) -> bool:
         """
-        Read one newline-terminated JSON response from the board.
-        Returns True on {"status": "ok"}, False on error or timeout.
+        Read the 1-byte ACK from the board.
+        Returns True on ACK_OK (0x00), False on ACK_ERROR or timeout.
         """
         try:
-            raw = b""
-            while b"\n" not in raw:
-                chunk = self._socket.recv(256)
-                if not chunk:
-                    self._logger.error("Connection closed by PYNQ board while waiting for ACK.")
-                    self._connected = False
-                    return False
-                raw += chunk
+            raw = self._socket.recv(1)
+            if not raw:
+                self._logger.error("Connection closed by PYNQ board while waiting for ACK.")
+                self._connected = False
+                return False
 
-            response = json.loads(raw.split(b"\n")[0].decode("utf-8"))
-            self._logger.debug("RX << %s", response)
+            ack = raw[0]
+            self._logger.debug("RX << ACK=0x%02X for %s", ack, command.value)
 
-            if response.get("status") == "ok":
+            if ack == ACK_OK:
                 return True
 
-            msg = response.get("message", "(no message)")
-            self._logger.error("PYNQ board returned error: %s", msg)
+            self._logger.error("PYNQ board returned error ACK for %s.", command.value)
             return False
 
         except socket.timeout:
-            self._logger.warning("Timed out waiting for ACK from PYNQ board.")
+            self._logger.warning("Timed out waiting for ACK | command=%s", command.value)
             return False
-        except (json.JSONDecodeError, OSError) as exc:
-            self._logger.error("Failed to parse ACK: %s", exc)
+        except OSError as exc:
+            self._logger.error("ACK recv failed: %s", exc)
             return False
 
-    def _send(self, command: CommandType, **kwargs) -> bool:
+    def _send(
+        self,
+        command: CommandType,
+        pid: int   = 0,
+        param1: float = 0.0,
+        param2: float = 0.0,
+    ) -> bool:
         """
         Build, transmit, and ACK-verify a command.
         Returns True on success, False on any failure.
@@ -178,8 +220,11 @@ class PYNQController:
             )
             return False
 
-        packet = self._build_packet(command, **kwargs)
-        self._logger.debug("TX >> %s", packet.decode().strip())
+        packet = self._build_packet(command, pid, param1, param2)
+        self._logger.debug(
+            "TX >> cmd=0x%02X pid=%d param1=%.6g param2=%.6g (%dB)",
+            _CMD_ID[command], pid, param1, param2, PACKET_SIZE,
+        )
 
         try:
             self._socket.sendall(packet)
@@ -188,9 +233,9 @@ class PYNQController:
             self._connected = False
             return False
 
-        success = self._recv_ack()
+        success = self._recv_ack(command)
         if success:
-            self._logger.info("ACK OK | command=%s | params=%s", command.value, kwargs)
+            self._logger.info("ACK OK | command=%s", command.value)
         return success
 
     # ------------------------------------------------------------------
@@ -250,7 +295,7 @@ class PYNQController:
         wavelength : Target wavelength in nanometres (nm).
         """
         self._logger.info("Locking laser | PID=%d | wavelength=%.4f nm", pid, wavelength)
-        return self._send(CommandType.LOCK_LASER, pid=pid, wavelength=wavelength)
+        return self._send(CommandType.LOCK_LASER, pid=pid, param1=wavelength)
 
     def unlock_laser(self, pid: int) -> bool:
         """
@@ -298,7 +343,7 @@ class PYNQController:
         duration : Run duration in seconds.
         """
         self._logger.info("Starting cavity | duration=%.2f s", duration)
-        return self._send(CommandType.START_CAVITY, duration=duration)
+        return self._send(CommandType.START_CAVITY, param1=duration)
 
     def stop_cavity(self) -> bool:
         """Immediately stop the optical cavity scan."""
