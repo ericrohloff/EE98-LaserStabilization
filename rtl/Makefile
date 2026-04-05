@@ -40,8 +40,8 @@ spi_tb.vvp: spi_controller.sv spi_controller_tb.sv
 dac_tb.vvp: dac_driver.sv spi_controller.sv dac_driver_tb.sv
 	$(IVERILOG) -g2012 -o dac_tb.vvp dac_driver.sv spi_controller.sv dac_driver_tb.sv
 
-ramp_bringup_tb.vvp: global_timing_sequencer.sv ramp_dac_spi.sv adc_frontend.sv ramp_dac_bringup_tb.sv
-	$(IVERILOG) -g2012 -o ramp_bringup_tb.vvp global_timing_sequencer.sv ramp_dac_spi.sv adc_frontend.sv ramp_dac_bringup_tb.sv
+ramp_bringup_tb.vvp: global_timing_sequencer.sv ramp_dac_spi.sv adc_frontend.sv output_dac_spi.sv ramp_dac_bringup_tb.sv
+	$(IVERILOG) -g2012 -o ramp_bringup_tb.vvp global_timing_sequencer.sv ramp_dac_spi.sv adc_frontend.sv output_dac_spi.sv ramp_dac_bringup_tb.sv
 
 clean:
 	rm -f pid_tb.vvp spi_tb.vvp dac_tb.vvp ramp_bringup_tb.vvp

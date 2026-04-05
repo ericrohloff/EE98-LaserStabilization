@@ -21,7 +21,17 @@ module ramp_dac_bringup (
     output logic        frame_start,
     output logic        frame_boundary,
     output logic        ramp_cycle_start,
-    output logic [15:0] current_ramp_pos
+    output logic [15:0] current_ramp_pos,
+    // Output DAC signals
+    input  logic        control_signal_valid,
+    input  logic [15:0] dac_ch0_data,
+    input  logic [15:0] dac_ch1_data,
+    input  logic [15:0] dac_ch2_data,
+    input  logic [15:0] dac_ch3_data,
+    output logic        out_dac_cs_n,
+    output logic        out_dac_sck,
+    output logic        out_dac_mosi,
+    output logic        out_dac_busy
 );
 
     logic phase_0_31;
@@ -71,6 +81,20 @@ module ramp_dac_bringup (
         .adc_sample_valid(adc_sample_valid)
     );
 
+    output_dac_spi out_dac (
+        .clk_100m(clk),
+        .reset_n(~reset),
+        .control_signal_valid(control_signal_valid),
+        .dac_ch0_data(dac_ch0_data),
+        .dac_ch1_data(dac_ch1_data),
+        .dac_ch2_data(dac_ch2_data),
+        .dac_ch3_data(dac_ch3_data),
+        .out_dac_cs_n(out_dac_cs_n),
+        .out_dac_sck(out_dac_sck),
+        .out_dac_mosi(out_dac_mosi),
+        .out_dac_busy(out_dac_busy)
+    );
+
 endmodule
 
 
@@ -112,7 +136,28 @@ module ramp_dac_bringup_tb;
     logic [15:0] adc_next_offset_word;
     integer      adc_sample_count;
 
+    // Output DAC test signals
+    logic        control_signal_valid;
+    logic [15:0] dac_ch0_data;
+    logic [15:0] dac_ch1_data;
+    logic [15:0] dac_ch2_data;
+    logic [15:0] dac_ch3_data;
+    logic        out_dac_cs_n;
+    logic        out_dac_sck;
+    logic        out_dac_mosi;
+    logic        out_dac_busy;
+
+    logic [23:0] out_dac_shift_buffer;
+    logic [7:0]  out_dac_cmd_addr_byte;
+    logic [15:0] out_dac_data_word;
+    integer      out_dac_bit_counter;
+    integer      out_dac_frame_count;
+    integer      out_dac_transfer_count;
+    logic [23:0] out_dac_expected_frame;
+    integer      out_dac_channel;
+
     localparam int FRAMES_TO_CHECK = 12;
+    localparam int DAC_UPDATES = 4;  // Number of DAC updates to verify
 
     assign adc_next_offset_word = adc_expected_offset_word + 16'h0111;
 
@@ -137,7 +182,16 @@ module ramp_dac_bringup_tb;
         .frame_start(frame_start),
         .frame_boundary(frame_boundary),
         .ramp_cycle_start(ramp_cycle_start),
-        .current_ramp_pos(current_ramp_pos)
+        .current_ramp_pos(current_ramp_pos),
+        .control_signal_valid(control_signal_valid),
+        .dac_ch0_data(dac_ch0_data),
+        .dac_ch1_data(dac_ch1_data),
+        .dac_ch2_data(dac_ch2_data),
+        .dac_ch3_data(dac_ch3_data),
+        .out_dac_cs_n(out_dac_cs_n),
+        .out_dac_sck(out_dac_sck),
+        .out_dac_mosi(out_dac_mosi),
+        .out_dac_busy(out_dac_busy)
     );
 
     initial begin
@@ -255,6 +309,61 @@ module ramp_dac_bringup_tb;
                 $error("frame_start asserted at non-0 tick (%0d)", frame_tick);
             end
         end
+
+        // Trigger output DAC every 3 frames to avoid back-to-back transfers
+        if (!reset && checks_active && frame_start && (adc_sample_count % 3 == 0) && (out_dac_transfer_count < DAC_UPDATES)) begin
+            control_signal_valid <= 1'b1;
+            dac_ch0_data <= 16'h0000 + (out_dac_transfer_count * 16'h1111);
+            dac_ch1_data <= 16'h1111 + (out_dac_transfer_count * 16'h1111);
+            dac_ch2_data <= 16'h2222 + (out_dac_transfer_count * 16'h1111);
+            dac_ch3_data <= 16'h3333 + (out_dac_transfer_count * 16'h1111);
+        end else begin
+            control_signal_valid <= 1'b0;
+        end
+    end
+
+    // Track output DAC transfer completion
+    logic out_dac_busy_prev;
+    
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            out_dac_busy_prev <= 1'b0;
+        end else begin
+            out_dac_busy_prev <= out_dac_busy;
+            
+            // On falling edge of busy (transfer complete), increment counter
+            if (out_dac_busy_prev && !out_dac_busy && checks_active) begin
+                out_dac_transfer_count <= out_dac_transfer_count + 1;
+                $display("Output DAC transfer #%0d complete", out_dac_transfer_count + 1);
+            end
+        end
+    end
+
+    // Monitor output DAC SPI transfers
+    always @(posedge out_dac_sck or posedge reset) begin
+        if (reset) begin
+            out_dac_shift_buffer <= 24'd0;
+            out_dac_bit_counter  <= 0;
+        end else if (!out_dac_cs_n && checks_active) begin
+            out_dac_shift_buffer <= {out_dac_shift_buffer[22:0], out_dac_mosi};
+            out_dac_bit_counter  <= out_dac_bit_counter + 1;
+
+            if (out_dac_bit_counter == 23) begin
+                // Verify the 24-bit frame
+                out_dac_frame_count <= out_dac_frame_count + 1;
+                out_dac_bit_counter <= 0;
+                
+                // We're verifying:
+                // Bits [7:0]   = addressing byte: [cmd(2) << 4 | channel(2) << 1 | A0(1)]
+                // Bits [23:8]  = 16-bit data
+                $display("Output DAC SPI frame #%0d: addr=0x%02h, data=0x%04h",
+                         out_dac_frame_count, 
+                         out_dac_shift_buffer[23:16], 
+                         out_dac_shift_buffer[15:0]);
+            end
+        end else begin
+            out_dac_bit_counter <= 0;
+        end
     end
 
     initial begin
@@ -277,16 +386,29 @@ module ramp_dac_bringup_tb;
         adc_expected_offset_word = 16'h8001;
         adc_expected_unsigned_word = 16'h8001;
         adc_sample_count = 0;
+        
+        // Output DAC initialization
+        control_signal_valid = 1'b0;
+        dac_ch0_data = 16'h0000;
+        dac_ch1_data = 16'h1111;
+        dac_ch2_data = 16'h2222;
+        dac_ch3_data = 16'h3333;
+        out_dac_shift_buffer = 24'd0;
+        out_dac_bit_counter = 0;
+        out_dac_frame_count = 0;
+        out_dac_transfer_count = 0;
+        out_dac_channel = 0;
 
         #20;
         @(posedge clk);
         reset  = 1'b0;
         enable = 1'b1;
 
-        wait ((frame_count >= FRAMES_TO_CHECK) && (adc_sample_count >= FRAMES_TO_CHECK));
+        wait ((frame_count >= FRAMES_TO_CHECK) && (adc_sample_count >= FRAMES_TO_CHECK) && (out_dac_frame_count >= 5 * DAC_UPDATES));
         repeat (5) @(posedge clk);
 
-        $display("Ramp DAC + ADC bring-up test complete: verified %0d ramp frames, %0d ADC samples", frame_count, adc_sample_count);
+        $display("Ramp DAC + ADC + Output DAC bring-up test complete: verified %0d ramp frames, %0d ADC samples, %0d Output DAC frames", 
+                 frame_count, adc_sample_count, out_dac_frame_count);
         $finish;
     end
 
