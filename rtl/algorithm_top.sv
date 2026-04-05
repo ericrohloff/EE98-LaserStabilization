@@ -1,0 +1,165 @@
+module algorithm_top (
+	input  wire [3:0] ref_id,
+	input  wire ref_exists,
+	input  wire ref_locked,
+	input  wire [31:0] ref_pid_p,
+	input  wire [31:0] ref_pid_i,
+	input  wire [31:0] ref_pid_d,
+	input  wire [15:0] ref_set_wavelength,
+	output wire [15:0] ref_detected_wavelength,
+
+	input  wire [3:0] l1_id,
+	input  wire l1_exists,
+	input  wire l1_locked,
+	input  wire [31:0] l1_pid_p,
+	input  wire [31:0] l1_pid_i,
+	input  wire [31:0] l1_pid_d,
+	input  wire [15:0] l1_set_wavelength,
+	output wire [15:0] l1_detected_wavelength,
+
+	input  wire [3:0] l2_id,
+	input  wire l2_exists,
+	input  wire l2_locked,
+	input  wire [31:0] l2_pid_p,
+	input  wire [31:0] l2_pid_i,
+	input  wire [31:0] l2_pid_d,
+	input  wire [15:0] l2_set_wavelength,
+	output wire [15:0] l2_detected_wavelength,
+
+	input  wire [3:0] l3_id,
+	input  wire l3_exists,
+	input  wire l3_locked,
+	input  wire [31:0] l3_pid_p,
+	input  wire [31:0] l3_pid_i,
+	input  wire [31:0] l3_pid_d,
+	input  wire [15:0] l3_set_wavelength,
+	output wire [15:0] l3_detected_wavelength,
+
+	input  wire [3:0] l4_id,
+	input  wire l4_exists,
+	input  wire l4_locked,
+	input  wire [31:0] l4_pid_p,
+	input  wire [31:0] l4_pid_i,
+	input  wire [31:0] l4_pid_d,
+	input  wire [15:0] l4_set_wavelength,
+	output wire [15:0] l4_detected_wavelength,
+
+	input  wire system_on,
+	input  wire system_locked,
+
+	// Hardware I/O
+	input wire clk,
+    input wire reset,
+    input wire enable,
+
+	input wire adc_miso,
+	output wire adc_sck,
+	output wire adc_cnv,
+    output wire [15:0] adc_sample_unsigned,
+
+	output wire dac_mosi,
+	output wire dac_sck,
+	output wire dac_cs,
+	output wire dac_ldac_n
+);
+
+    logic [6:0] seq_frame_tick;
+
+    global_timing_sequencer u_sequencer (
+        .clk(clk),
+        .reset(reset),
+        .enable(enable),
+        .frame_tick(seq_frame_tick)
+    );
+
+	ramp_dac_spi u_ramp_dac_spi (
+        .clk(clk),
+        .reset(reset),
+        .enable(enable),
+        .frame_tick(seq_frame_tick),
+        .ramp_step(64),
+        .ramp_min(16'd0),
+        .ramp_max(16'd63000),
+        .triangle_mode(0),                                 // TODO: remove this?
+        .ramp_dac_cs_n(dac_cs),
+        .ramp_dac_sck(dac_sck),
+        .ramp_dac_mosi(dac_mosi),
+        .ramp_dac_ldac_n(dac_ldac_n)
+    );
+
+	adc_frontend u_adc_frontend (
+        .clk(clk),
+        .reset(reset),
+        .enable(enable),
+        .frame_tick(seq_frame_tick),
+        .adc_miso(adc_miso),
+        .adc_cnv(adc_cnv),
+        .adc_sck(adc_sck),
+        .adc_sample_unsigned(adc_sample_unsigned)
+    );
+
+    logic [15:0] l1_peak_position;
+    logic [15:0] l2_peak_position;
+    logic [15:0] l3_peak_position;
+    logic [15:0] l4_peak_position;
+
+	peak_detection u_peak_detection (
+        .adc_sample(adc_sample_unsigned),
+        .ramp_start(), // TODO
+        .l1_target(l1_set_wavelength),
+        .l2_target(l2_set_wavelength),
+        .l3_target(l3_set_wavelength),
+        .l4_target(l4_set_wavelength),
+
+        .l1_position(l1_peak_position),
+        .l2_position(l2_peak_position),
+        .l3_position(l3_peak_position),
+        .l4_position(l4_peak_position)
+    );
+
+	laser_controller u_l1_controller (
+        .laser_id(l1_id),
+        .laser_exists(l1_exists),
+        .laser_locked(l1_locked),
+        .pid_p(l1_pid_p),
+        .pid_i(l1_pid_i),
+        .pid_d(l1_pid_d),
+        .set_wavelength(l1_set_wavelength),
+        .current_wavelength(l1_peak_position),
+        .ref_wavelength(ref_set_wavelength)
+    );
+	laser_controller u_l2_controller (
+        .laser_id(l2_id),
+        .laser_exists(l2_exists),
+        .laser_locked(l2_locked),
+        .pid_p(l2_pid_p),
+        .pid_i(l2_pid_i),
+        .pid_d(l2_pid_d),
+        .set_wavelength(l2_set_wavelength),
+        .current_wavelength(l2_peak_position),
+        .ref_wavelength(ref_set_wavelength)
+    );
+	laser_controller u_l3_controller (
+        .laser_id(l3_id),
+        .laser_exists(l3_exists),
+        .laser_locked(l3_locked),
+        .pid_p(l3_pid_p),
+        .pid_i(l3_pid_i),
+        .pid_d(l3_pid_d),
+        .set_wavelength(l3_set_wavelength),
+        .current_wavelength(l3_peak_position),
+        .ref_wavelength(ref_set_wavelength)
+    );
+	laser_controller u_l4_controller (
+        .laser_id(l4_id),
+        .laser_exists(l4_exists),
+        .laser_locked(l4_locked),
+        .pid_p(l4_pid_p),
+        .pid_i(l4_pid_i),
+        .pid_d(l4_pid_d),
+        .set_wavelength(l4_set_wavelength),
+        .current_wavelength(l4_peak_position),
+        .ref_wavelength(ref_set_wavelength)
+    );
+
+endmodule
