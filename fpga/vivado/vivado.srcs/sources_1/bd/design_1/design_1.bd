@@ -7,11 +7,20 @@
       "name": "design_1",
       "rev_ctrl_bd_flag": "RevCtrlBdOff",
       "synth_flow_mode": "None",
-      "tool_version": "2022.1"
+      "tool_version": "2022.1",
+      "validated": "true"
     },
     "design_tree": {
       "zynq_ultra_ps_e_0": "",
       "proc_sys_reset_0": "",
+      "clk_wiz_0": "",
+      "ramp_step": "",
+      "ramp_min": "",
+      "ramp_max": "",
+      "spi_enable": "",
+      "proc_sys_reset_1": "",
+      "axi_config_registers_0": "",
+      "axi_gpio_0": "",
       "axi_interconnect_0": {
         "xbar": "",
         "s00_couplers": {
@@ -21,24 +30,8 @@
         "m01_couplers": {},
         "m02_couplers": {}
       },
-      "axi_gpio_0": "",
-      "clk_wiz_0": "",
-      "global_timing_sequen_0": "",
-      "ramp_step": "",
-      "ramp_min": "",
-      "ramp_max": "",
-      "triangle_mode": "",
-      "spi_enable": "",
-      "proc_sys_reset_1": "",
       "axi_registers_0": "",
-      "adc_frontend_wrapper_0": "",
-      "axi_config_registers_0": "",
-      "ramp_dac_spi_wrapper_0": "",
-      "peak_detection_wrapp_0": "",
-      "laser_controller_wra_0": "",
-      "laser_controller_wra_1": "",
-      "laser_controller_wra_2": "",
-      "laser_controller_wra_3": ""
+      "algorithm_top_wrapper_0": ""
     },
     "interface_ports": {
       "led_8bits": {
@@ -51,6 +44,10 @@
         "vlnv_bus_definition": "xilinx.com:interface:diff_clock:1.0",
         "vlnv": "xilinx.com:interface:diff_clock_rtl:1.0",
         "parameters": {
+          "CAN_DEBUG": {
+            "value": "false",
+            "value_src": "default"
+          },
           "FREQ_HZ": {
             "value": "100000000"
           }
@@ -60,33 +57,75 @@
     "ports": {
       "clk_output": {
         "type": "data",
-        "direction": "O"
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
       },
       "dac_cs": {
         "type": "data",
-        "direction": "O"
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
       },
       "dac_mosi": {
         "type": "data",
-        "direction": "O"
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
       },
       "dac_ldac_n": {
         "type": "data",
         "direction": "O",
         "left": "0",
-        "right": "0"
+        "right": "0",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
       },
       "adc_miso": {
         "type": "data",
-        "direction": "I"
+        "direction": "I",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
       },
       "adc_cnv": {
         "type": "data",
-        "direction": "O"
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
       },
       "adc_sck": {
         "type": "data",
-        "direction": "O"
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
       }
     },
     "components": {
@@ -3120,6 +3159,174 @@
         "xci_path": "ip/design_1_proc_sys_reset_0_0/design_1_proc_sys_reset_0_0.xci",
         "inst_hier_path": "proc_sys_reset_0"
       },
+      "clk_wiz_0": {
+        "vlnv": "xilinx.com:ip:clk_wiz:6.0",
+        "xci_name": "design_1_clk_wiz_0_0",
+        "xci_path": "ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xci",
+        "inst_hier_path": "clk_wiz_0",
+        "parameters": {
+          "CLKOUT1_DRIVES": {
+            "value": "Buffer"
+          },
+          "CLKOUT1_JITTER": {
+            "value": "144.719"
+          },
+          "CLKOUT1_PHASE_ERROR": {
+            "value": "114.212"
+          },
+          "CLKOUT1_REQUESTED_OUT_FREQ": {
+            "value": "100"
+          },
+          "CLKOUT2_DRIVES": {
+            "value": "Buffer"
+          },
+          "CLKOUT2_JITTER": {
+            "value": "144.719"
+          },
+          "CLKOUT2_PHASE_ERROR": {
+            "value": "114.212"
+          },
+          "CLKOUT2_USED": {
+            "value": "false"
+          },
+          "CLKOUT3_DRIVES": {
+            "value": "Buffer"
+          },
+          "CLKOUT4_DRIVES": {
+            "value": "Buffer"
+          },
+          "CLKOUT5_DRIVES": {
+            "value": "Buffer"
+          },
+          "CLKOUT6_DRIVES": {
+            "value": "Buffer"
+          },
+          "CLKOUT7_DRIVES": {
+            "value": "Buffer"
+          },
+          "CLK_IN1_BOARD_INTERFACE": {
+            "value": "clk_100mhz"
+          },
+          "MMCM_BANDWIDTH": {
+            "value": "OPTIMIZED"
+          },
+          "MMCM_CLKFBOUT_MULT_F": {
+            "value": "8"
+          },
+          "MMCM_CLKOUT0_DIVIDE_F": {
+            "value": "8"
+          },
+          "MMCM_CLKOUT1_DIVIDE": {
+            "value": "1"
+          },
+          "MMCM_COMPENSATION": {
+            "value": "AUTO"
+          },
+          "NUM_OUT_CLKS": {
+            "value": "1"
+          },
+          "PRIMITIVE": {
+            "value": "PLL"
+          },
+          "PRIM_SOURCE": {
+            "value": "Differential_clock_capable_pin"
+          },
+          "USE_BOARD_FLOW": {
+            "value": "true"
+          },
+          "USE_RESET": {
+            "value": "false"
+          }
+        }
+      },
+      "ramp_step": {
+        "vlnv": "xilinx.com:ip:xlconstant:1.1",
+        "xci_name": "design_1_xlconstant_0_1",
+        "xci_path": "ip/design_1_xlconstant_0_1/design_1_xlconstant_0_1.xci",
+        "inst_hier_path": "ramp_step",
+        "parameters": {
+          "CONST_VAL": {
+            "value": "64"
+          },
+          "CONST_WIDTH": {
+            "value": "16"
+          }
+        }
+      },
+      "ramp_min": {
+        "vlnv": "xilinx.com:ip:xlconstant:1.1",
+        "xci_name": "design_1_ramp_step_0",
+        "xci_path": "ip/design_1_ramp_step_0/design_1_ramp_step_0.xci",
+        "inst_hier_path": "ramp_min",
+        "parameters": {
+          "CONST_VAL": {
+            "value": "0"
+          },
+          "CONST_WIDTH": {
+            "value": "16"
+          }
+        }
+      },
+      "ramp_max": {
+        "vlnv": "xilinx.com:ip:xlconstant:1.1",
+        "xci_name": "design_1_ramp_step_1",
+        "xci_path": "ip/design_1_ramp_step_1/design_1_ramp_step_1.xci",
+        "inst_hier_path": "ramp_max",
+        "parameters": {
+          "CONST_VAL": {
+            "value": "63000"
+          },
+          "CONST_WIDTH": {
+            "value": "16"
+          }
+        }
+      },
+      "spi_enable": {
+        "vlnv": "xilinx.com:ip:xlconstant:1.1",
+        "xci_name": "design_1_ramp_step_2",
+        "xci_path": "ip/design_1_ramp_step_2/design_1_ramp_step_2.xci",
+        "inst_hier_path": "spi_enable",
+        "parameters": {
+          "CONST_VAL": {
+            "value": "1"
+          },
+          "CONST_WIDTH": {
+            "value": "1"
+          }
+        }
+      },
+      "proc_sys_reset_1": {
+        "vlnv": "xilinx.com:ip:proc_sys_reset:5.0",
+        "xci_name": "design_1_proc_sys_reset_1_0",
+        "xci_path": "ip/design_1_proc_sys_reset_1_0/design_1_proc_sys_reset_1_0.xci",
+        "inst_hier_path": "proc_sys_reset_1"
+      },
+      "axi_config_registers_0": {
+        "vlnv": "user.org:user:axi_config_registers:1.0",
+        "xci_name": "design_1_axi_config_registers_0_1",
+        "xci_path": "ip/design_1_axi_config_registers_0_1/design_1_axi_config_registers_0_1.xci",
+        "inst_hier_path": "axi_config_registers_0"
+      },
+      "axi_gpio_0": {
+        "vlnv": "xilinx.com:ip:axi_gpio:2.0",
+        "xci_name": "design_1_axi_gpio_0_0",
+        "xci_path": "ip/design_1_axi_gpio_0_0/design_1_axi_gpio_0_0.xci",
+        "inst_hier_path": "axi_gpio_0",
+        "parameters": {
+          "C_GPIO2_WIDTH": {
+            "value": "28"
+          },
+          "C_IS_DUAL": {
+            "value": "1"
+          },
+          "GPIO_BOARD_INTERFACE": {
+            "value": "led_8bits"
+          },
+          "USE_BOARD_FLOW": {
+            "value": "true"
+          }
+        }
+      },
       "axi_interconnect_0": {
         "vlnv": "xilinx.com:ip:axi_interconnect:2.1",
         "xci_path": "ip/design_1_axi_interconnect_0_0/design_1_axi_interconnect_0_0.xci",
@@ -3611,256 +3818,209 @@
           }
         }
       },
-      "axi_gpio_0": {
-        "vlnv": "xilinx.com:ip:axi_gpio:2.0",
-        "xci_name": "design_1_axi_gpio_0_0",
-        "xci_path": "ip/design_1_axi_gpio_0_0/design_1_axi_gpio_0_0.xci",
-        "inst_hier_path": "axi_gpio_0",
-        "parameters": {
-          "GPIO_BOARD_INTERFACE": {
-            "value": "led_8bits"
-          },
-          "USE_BOARD_FLOW": {
-            "value": "true"
-          }
-        }
-      },
-      "clk_wiz_0": {
-        "vlnv": "xilinx.com:ip:clk_wiz:6.0",
-        "xci_name": "design_1_clk_wiz_0_0",
-        "xci_path": "ip/design_1_clk_wiz_0_0/design_1_clk_wiz_0_0.xci",
-        "inst_hier_path": "clk_wiz_0",
-        "parameters": {
-          "CLKOUT1_DRIVES": {
-            "value": "Buffer"
-          },
-          "CLKOUT1_JITTER": {
-            "value": "144.719"
-          },
-          "CLKOUT1_PHASE_ERROR": {
-            "value": "114.212"
-          },
-          "CLKOUT1_REQUESTED_OUT_FREQ": {
-            "value": "100"
-          },
-          "CLKOUT2_DRIVES": {
-            "value": "Buffer"
-          },
-          "CLKOUT2_JITTER": {
-            "value": "144.719"
-          },
-          "CLKOUT2_PHASE_ERROR": {
-            "value": "114.212"
-          },
-          "CLKOUT2_USED": {
-            "value": "false"
-          },
-          "CLKOUT3_DRIVES": {
-            "value": "Buffer"
-          },
-          "CLKOUT4_DRIVES": {
-            "value": "Buffer"
-          },
-          "CLKOUT5_DRIVES": {
-            "value": "Buffer"
-          },
-          "CLKOUT6_DRIVES": {
-            "value": "Buffer"
-          },
-          "CLKOUT7_DRIVES": {
-            "value": "Buffer"
-          },
-          "CLK_IN1_BOARD_INTERFACE": {
-            "value": "clk_100mhz"
-          },
-          "MMCM_BANDWIDTH": {
-            "value": "OPTIMIZED"
-          },
-          "MMCM_CLKFBOUT_MULT_F": {
-            "value": "8"
-          },
-          "MMCM_CLKOUT0_DIVIDE_F": {
-            "value": "8"
-          },
-          "MMCM_CLKOUT1_DIVIDE": {
-            "value": "1"
-          },
-          "MMCM_COMPENSATION": {
-            "value": "AUTO"
-          },
-          "NUM_OUT_CLKS": {
-            "value": "1"
-          },
-          "PRIMITIVE": {
-            "value": "PLL"
-          },
-          "PRIM_SOURCE": {
-            "value": "Differential_clock_capable_pin"
-          },
-          "USE_BOARD_FLOW": {
-            "value": "true"
-          },
-          "USE_RESET": {
-            "value": "false"
-          }
-        }
-      },
-      "global_timing_sequen_0": {
-        "vlnv": "xilinx.com:module_ref:global_timing_sequencer_wrapper:1.0",
-        "xci_name": "design_1_global_timing_sequen_0_0",
-        "xci_path": "ip/design_1_global_timing_sequen_0_0/design_1_global_timing_sequen_0_0.xci",
-        "inst_hier_path": "global_timing_sequen_0",
-        "reference_info": {
-          "ref_type": "hdl",
-          "ref_name": "global_timing_sequencer_wrapper",
-          "boundary_crc": "0x0"
-        },
-        "ports": {
-          "clk": {
-            "type": "clk",
-            "direction": "I",
-            "parameters": {
-              "ASSOCIATED_RESET": {
-                "value": "reset",
-                "value_src": "constant"
-              },
-              "FREQ_HZ": {
-                "value": "100000000",
-                "value_src": "ip_prop"
-              },
-              "PHASE": {
-                "value": "0.0",
-                "value_src": "ip_prop"
-              },
-              "CLK_DOMAIN": {
-                "value": "design_1_clk_wiz_0_0_clk_out1",
-                "value_src": "default_prop"
-              }
-            }
-          },
-          "reset": {
-            "type": "rst",
-            "direction": "I",
-            "parameters": {
-              "POLARITY": {
-                "value": "ACTIVE_HIGH",
-                "value_src": "const_prop"
-              }
-            }
-          },
-          "enable": {
-            "direction": "I"
-          },
-          "frame_tick": {
-            "direction": "O",
-            "left": "6",
-            "right": "0"
-          },
-          "frame_start": {
-            "direction": "O"
-          },
-          "frame_boundary": {
-            "direction": "O"
-          },
-          "phase_0_31": {
-            "direction": "O"
-          },
-          "phase_32_49": {
-            "direction": "O"
-          },
-          "phase_50_81": {
-            "direction": "O"
-          },
-          "phase_82_98": {
-            "direction": "O"
-          }
-        }
-      },
-      "ramp_step": {
-        "vlnv": "xilinx.com:ip:xlconstant:1.1",
-        "xci_name": "design_1_xlconstant_0_1",
-        "xci_path": "ip/design_1_xlconstant_0_1/design_1_xlconstant_0_1.xci",
-        "inst_hier_path": "ramp_step",
-        "parameters": {
-          "CONST_VAL": {
-            "value": "64"
-          },
-          "CONST_WIDTH": {
-            "value": "16"
-          }
-        }
-      },
-      "ramp_min": {
-        "vlnv": "xilinx.com:ip:xlconstant:1.1",
-        "xci_name": "design_1_ramp_step_0",
-        "xci_path": "ip/design_1_ramp_step_0/design_1_ramp_step_0.xci",
-        "inst_hier_path": "ramp_min",
-        "parameters": {
-          "CONST_VAL": {
-            "value": "0"
-          },
-          "CONST_WIDTH": {
-            "value": "16"
-          }
-        }
-      },
-      "ramp_max": {
-        "vlnv": "xilinx.com:ip:xlconstant:1.1",
-        "xci_name": "design_1_ramp_step_1",
-        "xci_path": "ip/design_1_ramp_step_1/design_1_ramp_step_1.xci",
-        "inst_hier_path": "ramp_max",
-        "parameters": {
-          "CONST_VAL": {
-            "value": "63000"
-          },
-          "CONST_WIDTH": {
-            "value": "16"
-          }
-        }
-      },
-      "triangle_mode": {
-        "vlnv": "xilinx.com:ip:xlconstant:1.1",
-        "xci_name": "design_1_ramp_step_2",
-        "xci_path": "ip/design_1_ramp_step_2/design_1_ramp_step_2.xci",
-        "inst_hier_path": "triangle_mode",
-        "parameters": {
-          "CONST_VAL": {
-            "value": "0"
-          },
-          "CONST_WIDTH": {
-            "value": "1"
-          }
-        }
-      },
-      "spi_enable": {
-        "vlnv": "xilinx.com:ip:xlconstant:1.1",
-        "xci_name": "design_1_xlconstant_0_2",
-        "xci_path": "ip/design_1_xlconstant_0_2/design_1_xlconstant_0_2.xci",
-        "inst_hier_path": "spi_enable"
-      },
-      "proc_sys_reset_1": {
-        "vlnv": "xilinx.com:ip:proc_sys_reset:5.0",
-        "xci_name": "design_1_proc_sys_reset_1_0",
-        "xci_path": "ip/design_1_proc_sys_reset_1_0/design_1_proc_sys_reset_1_0.xci",
-        "inst_hier_path": "proc_sys_reset_1"
-      },
       "axi_registers_0": {
         "vlnv": "user.org:user:axi_registers:1.0",
         "xci_name": "design_1_axi_registers_0_0",
         "xci_path": "ip/design_1_axi_registers_0_0/design_1_axi_registers_0_0.xci",
         "inst_hier_path": "axi_registers_0"
       },
-      "adc_frontend_wrapper_0": {
-        "vlnv": "xilinx.com:module_ref:adc_frontend_wrapper:1.0",
-        "xci_name": "design_1_adc_frontend_wrapper_0_0",
-        "xci_path": "ip/design_1_adc_frontend_wrapper_0_0/design_1_adc_frontend_wrapper_0_0.xci",
-        "inst_hier_path": "adc_frontend_wrapper_0",
+      "algorithm_top_wrapper_0": {
+        "vlnv": "xilinx.com:module_ref:algorithm_top_wrapper:1.0",
+        "xci_name": "design_1_algorithm_top_wrapper_0_0",
+        "xci_path": "ip/design_1_algorithm_top_wrapper_0_0/design_1_algorithm_top_wrapper_0_0.xci",
+        "inst_hier_path": "algorithm_top_wrapper_0",
         "reference_info": {
           "ref_type": "hdl",
-          "ref_name": "adc_frontend_wrapper",
+          "ref_name": "algorithm_top_wrapper",
           "boundary_crc": "0x0"
         },
         "ports": {
+          "ref_id": {
+            "direction": "I",
+            "left": "3",
+            "right": "0"
+          },
+          "ref_exists": {
+            "direction": "I"
+          },
+          "ref_locked": {
+            "direction": "I"
+          },
+          "ref_pid_p": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "ref_pid_i": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "ref_pid_d": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "ref_set_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "ref_detected_wavelength": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "l1_id": {
+            "direction": "I",
+            "left": "3",
+            "right": "0"
+          },
+          "l1_exists": {
+            "direction": "I"
+          },
+          "l1_locked": {
+            "direction": "I"
+          },
+          "l1_pid_p": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l1_pid_i": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l1_pid_d": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l1_set_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "l1_detected_wavelength": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "l2_id": {
+            "direction": "I",
+            "left": "3",
+            "right": "0"
+          },
+          "l2_exists": {
+            "direction": "I"
+          },
+          "l2_locked": {
+            "direction": "I"
+          },
+          "l2_pid_p": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l2_pid_i": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l2_pid_d": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l2_set_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "l2_detected_wavelength": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "l3_id": {
+            "direction": "I",
+            "left": "3",
+            "right": "0"
+          },
+          "l3_exists": {
+            "direction": "I"
+          },
+          "l3_locked": {
+            "direction": "I"
+          },
+          "l3_pid_p": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l3_pid_i": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l3_pid_d": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l3_set_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "l3_detected_wavelength": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "l4_id": {
+            "direction": "I",
+            "left": "3",
+            "right": "0"
+          },
+          "l4_exists": {
+            "direction": "I"
+          },
+          "l4_locked": {
+            "direction": "I"
+          },
+          "l4_pid_p": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l4_pid_i": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l4_pid_d": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "l4_set_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "l4_detected_wavelength": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "system_on": {
+            "direction": "I"
+          },
+          "system_locked": {
+            "direction": "I"
+          },
           "clk": {
             "type": "clk",
             "direction": "I",
@@ -3895,11 +4055,6 @@
           },
           "enable": {
             "direction": "I"
-          },
-          "frame_tick": {
-            "direction": "I",
-            "left": "6",
-            "right": "0"
           },
           "adc_miso": {
             "direction": "I",
@@ -3910,10 +4065,10 @@
               }
             }
           },
-          "adc_cnv": {
+          "adc_sck": {
             "direction": "O"
           },
-          "adc_sck": {
+          "adc_cnv": {
             "direction": "O"
           },
           "adc_sample_unsigned": {
@@ -3921,401 +4076,17 @@
             "left": "15",
             "right": "0"
           },
-          "adc_sample_valid": {
-            "direction": "O"
-          }
-        }
-      },
-      "axi_config_registers_0": {
-        "vlnv": "user.org:user:axi_config_registers:1.0",
-        "xci_name": "design_1_axi_config_registers_0_1",
-        "xci_path": "ip/design_1_axi_config_registers_0_1/design_1_axi_config_registers_0_1.xci",
-        "inst_hier_path": "axi_config_registers_0"
-      },
-      "ramp_dac_spi_wrapper_0": {
-        "vlnv": "xilinx.com:module_ref:ramp_dac_spi_wrapper:1.0",
-        "xci_name": "design_1_ramp_dac_spi_wrapper_0_0",
-        "xci_path": "ip/design_1_ramp_dac_spi_wrapper_0_0/design_1_ramp_dac_spi_wrapper_0_0.xci",
-        "inst_hier_path": "ramp_dac_spi_wrapper_0",
-        "reference_info": {
-          "ref_type": "hdl",
-          "ref_name": "ramp_dac_spi_wrapper",
-          "boundary_crc": "0x0"
-        },
-        "ports": {
-          "clk": {
-            "type": "clk",
-            "direction": "I",
-            "parameters": {
-              "ASSOCIATED_RESET": {
-                "value": "reset",
-                "value_src": "constant"
-              }
-            }
-          },
-          "reset": {
-            "type": "rst",
-            "direction": "I"
-          },
-          "enable": {
-            "direction": "I"
-          },
-          "frame_tick": {
-            "direction": "I",
-            "left": "6",
-            "right": "0"
-          },
-          "ramp_step": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "ramp_min": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "ramp_max": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "triangle_mode": {
-            "direction": "I"
-          },
-          "ramp_dac_cs_n": {
+          "dac_mosi": {
             "direction": "O"
           },
-          "ramp_dac_sck": {
+          "dac_sck": {
             "direction": "O"
           },
-          "ramp_dac_mosi": {
+          "dac_cs": {
             "direction": "O"
           },
-          "ramp_dac_ldac_n": {
+          "dac_ldac_n": {
             "direction": "O"
-          },
-          "current_ramp_pos": {
-            "direction": "O",
-            "left": "15",
-            "right": "0"
-          },
-          "ramp_cycle_start": {
-            "direction": "O"
-          }
-        }
-      },
-      "peak_detection_wrapp_0": {
-        "vlnv": "xilinx.com:module_ref:peak_detection_wrapper:1.0",
-        "xci_name": "design_1_peak_detection_wrapp_0_0",
-        "xci_path": "ip/design_1_peak_detection_wrapp_0_0/design_1_peak_detection_wrapp_0_0.xci",
-        "inst_hier_path": "peak_detection_wrapp_0",
-        "reference_info": {
-          "ref_type": "hdl",
-          "ref_name": "peak_detection_wrapper",
-          "boundary_crc": "0x0"
-        },
-        "ports": {
-          "adc_sample": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "ramp_start": {
-            "direction": "I"
-          },
-          "ref_target": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "l1_target": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "l2_target": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "l3_target": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "l4_target": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "l1_position": {
-            "direction": "O",
-            "left": "15",
-            "right": "0"
-          },
-          "l2_position": {
-            "direction": "O",
-            "left": "15",
-            "right": "0"
-          },
-          "l3_position": {
-            "direction": "O",
-            "left": "15",
-            "right": "0"
-          },
-          "l4_position": {
-            "direction": "O",
-            "left": "15",
-            "right": "0"
-          }
-        }
-      },
-      "laser_controller_wra_0": {
-        "vlnv": "xilinx.com:module_ref:laser_controller_wrapper:1.0",
-        "xci_name": "design_1_laser_controller_wra_0_0",
-        "xci_path": "ip/design_1_laser_controller_wra_0_0/design_1_laser_controller_wra_0_0.xci",
-        "inst_hier_path": "laser_controller_wra_0",
-        "reference_info": {
-          "ref_type": "unknown",
-          "ref_name": "laser_controller_wrapper",
-          "boundary_crc": "0x0"
-        },
-        "ports": {
-          "ramp_start": {
-            "direction": "I"
-          },
-          "laser_id": {
-            "direction": "I",
-            "left": "3",
-            "right": "0"
-          },
-          "laser_exists": {
-            "direction": "I"
-          },
-          "laser_locked": {
-            "direction": "I"
-          },
-          "pid_p": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "pid_i": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "pid_d": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "set_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "current_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "ref_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "feedback": {
-            "direction": "O",
-            "left": "16",
-            "right": "0"
-          }
-        }
-      },
-      "laser_controller_wra_1": {
-        "vlnv": "xilinx.com:module_ref:laser_controller_wrapper:1.0",
-        "xci_name": "design_1_laser_controller_wra_0_1",
-        "xci_path": "ip/design_1_laser_controller_wra_0_1/design_1_laser_controller_wra_0_1.xci",
-        "inst_hier_path": "laser_controller_wra_1",
-        "reference_info": {
-          "ref_type": "unknown",
-          "ref_name": "laser_controller_wrapper",
-          "boundary_crc": "0x0"
-        },
-        "ports": {
-          "ramp_start": {
-            "direction": "I"
-          },
-          "laser_id": {
-            "direction": "I",
-            "left": "3",
-            "right": "0"
-          },
-          "laser_exists": {
-            "direction": "I"
-          },
-          "laser_locked": {
-            "direction": "I"
-          },
-          "pid_p": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "pid_i": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "pid_d": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "set_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "current_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "ref_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "feedback": {
-            "direction": "O",
-            "left": "16",
-            "right": "0"
-          }
-        }
-      },
-      "laser_controller_wra_2": {
-        "vlnv": "xilinx.com:module_ref:laser_controller_wrapper:1.0",
-        "xci_name": "design_1_laser_controller_wra_0_2",
-        "xci_path": "ip/design_1_laser_controller_wra_0_2/design_1_laser_controller_wra_0_2.xci",
-        "inst_hier_path": "laser_controller_wra_2",
-        "reference_info": {
-          "ref_type": "unknown",
-          "ref_name": "laser_controller_wrapper",
-          "boundary_crc": "0x0"
-        },
-        "ports": {
-          "ramp_start": {
-            "direction": "I"
-          },
-          "laser_id": {
-            "direction": "I",
-            "left": "3",
-            "right": "0"
-          },
-          "laser_exists": {
-            "direction": "I"
-          },
-          "laser_locked": {
-            "direction": "I"
-          },
-          "pid_p": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "pid_i": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "pid_d": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "set_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "current_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "ref_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "feedback": {
-            "direction": "O",
-            "left": "16",
-            "right": "0"
-          }
-        }
-      },
-      "laser_controller_wra_3": {
-        "vlnv": "xilinx.com:module_ref:laser_controller_wrapper:1.0",
-        "xci_name": "design_1_laser_controller_wra_2_0",
-        "xci_path": "ip/design_1_laser_controller_wra_2_0/design_1_laser_controller_wra_2_0.xci",
-        "inst_hier_path": "laser_controller_wra_3",
-        "reference_info": {
-          "ref_type": "unknown",
-          "ref_name": "laser_controller_wrapper",
-          "boundary_crc": "0x0"
-        },
-        "ports": {
-          "ramp_start": {
-            "direction": "I"
-          },
-          "laser_id": {
-            "direction": "I",
-            "left": "3",
-            "right": "0"
-          },
-          "laser_exists": {
-            "direction": "I"
-          },
-          "laser_locked": {
-            "direction": "I"
-          },
-          "pid_p": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "pid_i": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "pid_d": {
-            "direction": "I",
-            "left": "31",
-            "right": "0"
-          },
-          "set_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "current_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "ref_wavelength": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "feedback": {
-            "direction": "O",
-            "left": "16",
-            "right": "0"
           }
         }
       }
@@ -4359,179 +4130,307 @@
       }
     },
     "nets": {
-      "adc_frontend_wrapper_0_adc_cnv": {
-        "ports": [
-          "adc_frontend_wrapper_0/adc_cnv",
-          "adc_cnv"
-        ]
-      },
       "adc_frontend_wrapper_0_adc_sample_unsigned": {
         "ports": [
-          "adc_frontend_wrapper_0/adc_sample_unsigned",
-          "axi_registers_0/adc_debug",
-          "axi_config_registers_0/ref_detected_wavelength"
-        ]
-      },
-      "adc_frontend_wrapper_0_adc_sck": {
-        "ports": [
-          "adc_frontend_wrapper_0/adc_sck",
-          "adc_sck"
+          "algorithm_top_wrapper_0/adc_sample_unsigned",
+          "axi_config_registers_0/ref_detected_wavelength",
+          "axi_registers_0/adc_debug"
         ]
       },
       "adc_miso_1": {
         "ports": [
           "adc_miso",
-          "adc_frontend_wrapper_0/adc_miso"
+          "algorithm_top_wrapper_0/adc_miso"
+        ]
+      },
+      "algorithm_top_wrapper_0_adc_cnv": {
+        "ports": [
+          "algorithm_top_wrapper_0/adc_cnv",
+          "adc_cnv"
+        ]
+      },
+      "algorithm_top_wrapper_0_adc_sck": {
+        "ports": [
+          "algorithm_top_wrapper_0/adc_sck",
+          "adc_sck"
+        ]
+      },
+      "algorithm_top_wrapper_0_dac_cs": {
+        "ports": [
+          "algorithm_top_wrapper_0/dac_cs",
+          "dac_cs"
+        ]
+      },
+      "algorithm_top_wrapper_0_dac_ldac_n": {
+        "ports": [
+          "algorithm_top_wrapper_0/dac_ldac_n",
+          "dac_ldac_n"
+        ]
+      },
+      "algorithm_top_wrapper_0_dac_mosi": {
+        "ports": [
+          "algorithm_top_wrapper_0/dac_mosi",
+          "dac_mosi"
+        ]
+      },
+      "algorithm_top_wrapper_0_dac_sck": {
+        "ports": [
+          "algorithm_top_wrapper_0/dac_sck",
+          "clk_output"
         ]
       },
       "axi_config_registers_0_l1_exists": {
         "ports": [
           "axi_config_registers_0/l1_exists",
-          "laser_controller_wra_0/laser_exists"
+          "algorithm_top_wrapper_0/l1_exists"
         ]
       },
       "axi_config_registers_0_l1_id": {
         "ports": [
           "axi_config_registers_0/l1_id",
-          "laser_controller_wra_0/laser_id"
+          "algorithm_top_wrapper_0/l1_id"
         ]
       },
       "axi_config_registers_0_l1_locked": {
         "ports": [
           "axi_config_registers_0/l1_locked",
-          "laser_controller_wra_0/laser_locked"
+          "algorithm_top_wrapper_0/l1_locked"
         ]
       },
       "axi_config_registers_0_l1_pid_d": {
         "ports": [
           "axi_config_registers_0/l1_pid_d",
-          "laser_controller_wra_0/pid_d"
+          "algorithm_top_wrapper_0/l1_pid_d"
         ]
       },
       "axi_config_registers_0_l1_pid_i": {
         "ports": [
           "axi_config_registers_0/l1_pid_i",
-          "laser_controller_wra_0/pid_i"
+          "algorithm_top_wrapper_0/l1_pid_i"
         ]
       },
       "axi_config_registers_0_l1_pid_p": {
         "ports": [
           "axi_config_registers_0/l1_pid_p",
-          "laser_controller_wra_0/pid_p"
+          "algorithm_top_wrapper_0/l1_pid_p"
         ]
       },
       "axi_config_registers_0_l1_set_wavelength": {
         "ports": [
           "axi_config_registers_0/l1_set_wavelength",
-          "laser_controller_wra_0/set_wavelength"
+          "algorithm_top_wrapper_0/l1_set_wavelength"
+        ]
+      },
+      "axi_config_registers_0_l2_exists": {
+        "ports": [
+          "axi_config_registers_0/l2_exists",
+          "algorithm_top_wrapper_0/l2_exists"
+        ]
+      },
+      "axi_config_registers_0_l2_id": {
+        "ports": [
+          "axi_config_registers_0/l2_id",
+          "algorithm_top_wrapper_0/l2_id"
+        ]
+      },
+      "axi_config_registers_0_l2_locked": {
+        "ports": [
+          "axi_config_registers_0/l2_locked",
+          "algorithm_top_wrapper_0/l2_locked"
+        ]
+      },
+      "axi_config_registers_0_l2_pid_d": {
+        "ports": [
+          "axi_config_registers_0/l2_pid_d",
+          "algorithm_top_wrapper_0/l2_pid_d"
+        ]
+      },
+      "axi_config_registers_0_l2_pid_i": {
+        "ports": [
+          "axi_config_registers_0/l2_pid_i",
+          "algorithm_top_wrapper_0/l2_pid_i"
+        ]
+      },
+      "axi_config_registers_0_l2_pid_p": {
+        "ports": [
+          "axi_config_registers_0/l2_pid_p",
+          "algorithm_top_wrapper_0/l2_pid_p"
+        ]
+      },
+      "axi_config_registers_0_l2_set_wavelength": {
+        "ports": [
+          "axi_config_registers_0/l2_set_wavelength",
+          "algorithm_top_wrapper_0/l2_set_wavelength"
+        ]
+      },
+      "axi_config_registers_0_l3_exists": {
+        "ports": [
+          "axi_config_registers_0/l3_exists",
+          "algorithm_top_wrapper_0/l3_exists"
+        ]
+      },
+      "axi_config_registers_0_l3_id": {
+        "ports": [
+          "axi_config_registers_0/l3_id",
+          "algorithm_top_wrapper_0/l3_id"
+        ]
+      },
+      "axi_config_registers_0_l3_locked": {
+        "ports": [
+          "axi_config_registers_0/l3_locked",
+          "algorithm_top_wrapper_0/l3_locked"
+        ]
+      },
+      "axi_config_registers_0_l3_pid_d": {
+        "ports": [
+          "axi_config_registers_0/l3_pid_d",
+          "algorithm_top_wrapper_0/l3_pid_d"
+        ]
+      },
+      "axi_config_registers_0_l3_pid_i": {
+        "ports": [
+          "axi_config_registers_0/l3_pid_i",
+          "algorithm_top_wrapper_0/l3_pid_i"
+        ]
+      },
+      "axi_config_registers_0_l3_pid_p": {
+        "ports": [
+          "axi_config_registers_0/l3_pid_p",
+          "algorithm_top_wrapper_0/l3_pid_p"
+        ]
+      },
+      "axi_config_registers_0_l3_set_wavelength": {
+        "ports": [
+          "axi_config_registers_0/l3_set_wavelength",
+          "algorithm_top_wrapper_0/l3_set_wavelength"
+        ]
+      },
+      "axi_config_registers_0_l4_exists": {
+        "ports": [
+          "axi_config_registers_0/l4_exists",
+          "algorithm_top_wrapper_0/l4_exists"
+        ]
+      },
+      "axi_config_registers_0_l4_id": {
+        "ports": [
+          "axi_config_registers_0/l4_id",
+          "algorithm_top_wrapper_0/l4_id"
+        ]
+      },
+      "axi_config_registers_0_l4_locked": {
+        "ports": [
+          "axi_config_registers_0/l4_locked",
+          "algorithm_top_wrapper_0/l4_locked"
+        ]
+      },
+      "axi_config_registers_0_l4_pid_d": {
+        "ports": [
+          "axi_config_registers_0/l4_pid_d",
+          "algorithm_top_wrapper_0/l4_pid_d"
+        ]
+      },
+      "axi_config_registers_0_l4_pid_i": {
+        "ports": [
+          "axi_config_registers_0/l4_pid_i",
+          "algorithm_top_wrapper_0/l4_pid_i"
+        ]
+      },
+      "axi_config_registers_0_l4_pid_p": {
+        "ports": [
+          "axi_config_registers_0/l4_pid_p",
+          "algorithm_top_wrapper_0/l4_pid_p"
+        ]
+      },
+      "axi_config_registers_0_l4_set_wavelength": {
+        "ports": [
+          "axi_config_registers_0/l4_set_wavelength",
+          "algorithm_top_wrapper_0/l4_set_wavelength"
+        ]
+      },
+      "axi_config_registers_0_ref_exists": {
+        "ports": [
+          "axi_config_registers_0/ref_exists",
+          "algorithm_top_wrapper_0/ref_exists"
+        ]
+      },
+      "axi_config_registers_0_ref_id": {
+        "ports": [
+          "axi_config_registers_0/ref_id",
+          "algorithm_top_wrapper_0/ref_id"
+        ]
+      },
+      "axi_config_registers_0_ref_locked": {
+        "ports": [
+          "axi_config_registers_0/ref_locked",
+          "algorithm_top_wrapper_0/ref_locked"
+        ]
+      },
+      "axi_config_registers_0_ref_pid_d": {
+        "ports": [
+          "axi_config_registers_0/ref_pid_d",
+          "algorithm_top_wrapper_0/ref_pid_d"
+        ]
+      },
+      "axi_config_registers_0_ref_pid_i": {
+        "ports": [
+          "axi_config_registers_0/ref_pid_i",
+          "algorithm_top_wrapper_0/ref_pid_i"
+        ]
+      },
+      "axi_config_registers_0_ref_pid_p": {
+        "ports": [
+          "axi_config_registers_0/ref_pid_p",
+          "algorithm_top_wrapper_0/ref_pid_p"
         ]
       },
       "axi_config_registers_0_ref_set_wavelength": {
         "ports": [
           "axi_config_registers_0/ref_set_wavelength",
-          "laser_controller_wra_0/ref_wavelength",
-          "laser_controller_wra_1/ref_wavelength",
-          "laser_controller_wra_2/ref_wavelength",
-          "laser_controller_wra_3/ref_wavelength"
+          "algorithm_top_wrapper_0/ref_set_wavelength"
+        ]
+      },
+      "axi_config_registers_0_system_locked": {
+        "ports": [
+          "axi_config_registers_0/system_locked",
+          "algorithm_top_wrapper_0/system_locked"
+        ]
+      },
+      "axi_config_registers_0_system_on": {
+        "ports": [
+          "axi_config_registers_0/system_on",
+          "algorithm_top_wrapper_0/system_on"
         ]
       },
       "clk_wiz_0_clk_out1": {
         "ports": [
           "clk_wiz_0/clk_out1",
-          "global_timing_sequen_0/clk",
           "proc_sys_reset_1/slowest_sync_clk",
-          "adc_frontend_wrapper_0/clk",
-          "ramp_dac_spi_wrapper_0/clk"
-        ]
-      },
-      "global_timing_sequen_0_frame_tick": {
-        "ports": [
-          "global_timing_sequen_0/frame_tick",
-          "adc_frontend_wrapper_0/frame_tick",
-          "ramp_dac_spi_wrapper_0/frame_tick"
-        ]
-      },
-      "peak_detection_wrapp_0_l1_position": {
-        "ports": [
-          "peak_detection_wrapp_0/l1_position",
-          "laser_controller_wra_0/current_wavelength"
+          "algorithm_top_wrapper_0/clk"
         ]
       },
       "proc_sys_reset_0_peripheral_aresetn": {
         "ports": [
           "proc_sys_reset_0/peripheral_aresetn",
+          "axi_config_registers_0/s00_axi_aresetn",
+          "axi_gpio_0/s_axi_aresetn",
           "axi_interconnect_0/ARESETN",
           "axi_interconnect_0/S00_ARESETN",
-          "axi_gpio_0/s_axi_aresetn",
           "axi_interconnect_0/M00_ARESETN",
           "axi_interconnect_0/M01_ARESETN",
-          "axi_registers_0/s00_axi_aresetn",
           "axi_interconnect_0/M02_ARESETN",
-          "axi_config_registers_0/s00_axi_aresetn"
+          "axi_registers_0/s00_axi_aresetn"
         ]
       },
       "proc_sys_reset_1_mb_reset": {
         "ports": [
           "proc_sys_reset_1/mb_reset",
-          "global_timing_sequen_0/reset",
-          "adc_frontend_wrapper_0/reset",
-          "ramp_dac_spi_wrapper_0/reset"
+          "algorithm_top_wrapper_0/reset"
         ]
       },
-      "ramp_dac_spi_wrapper_0_ramp_dac_cs_n": {
-        "ports": [
-          "ramp_dac_spi_wrapper_0/ramp_dac_cs_n",
-          "dac_cs"
-        ]
-      },
-      "ramp_dac_spi_wrapper_0_ramp_dac_ldac_n": {
-        "ports": [
-          "ramp_dac_spi_wrapper_0/ramp_dac_ldac_n",
-          "dac_ldac_n"
-        ]
-      },
-      "ramp_dac_spi_wrapper_0_ramp_dac_mosi": {
-        "ports": [
-          "ramp_dac_spi_wrapper_0/ramp_dac_mosi",
-          "dac_mosi"
-        ]
-      },
-      "ramp_dac_spi_wrapper_0_ramp_dac_sck": {
-        "ports": [
-          "ramp_dac_spi_wrapper_0/ramp_dac_sck",
-          "clk_output"
-        ]
-      },
-      "ramp_max_dout": {
-        "ports": [
-          "ramp_max/dout",
-          "ramp_dac_spi_wrapper_0/ramp_max"
-        ]
-      },
-      "ramp_min_dout": {
-        "ports": [
-          "ramp_min/dout",
-          "ramp_dac_spi_wrapper_0/ramp_min"
-        ]
-      },
-      "ramp_step1_dout": {
-        "ports": [
-          "triangle_mode/dout",
-          "ramp_dac_spi_wrapper_0/triangle_mode"
-        ]
-      },
-      "ramp_step_dout": {
-        "ports": [
-          "ramp_step/dout",
-          "ramp_dac_spi_wrapper_0/ramp_step"
-        ]
-      },
-      "xlconstant_0_dout": {
+      "triangle_mode_dout": {
         "ports": [
           "spi_enable/dout",
-          "global_timing_sequen_0/enable",
-          "adc_frontend_wrapper_0/enable",
-          "ramp_dac_spi_wrapper_0/enable"
+          "algorithm_top_wrapper_0/enable"
         ]
       },
       "zynq_ultra_ps_e_0_pl_clk0": {
@@ -4539,14 +4438,14 @@
           "zynq_ultra_ps_e_0/pl_clk0",
           "proc_sys_reset_0/slowest_sync_clk",
           "zynq_ultra_ps_e_0/maxihpm0_lpd_aclk",
+          "axi_config_registers_0/s00_axi_aclk",
+          "axi_gpio_0/s_axi_aclk",
           "axi_interconnect_0/ACLK",
           "axi_interconnect_0/S00_ACLK",
-          "axi_gpio_0/s_axi_aclk",
           "axi_interconnect_0/M00_ACLK",
           "axi_interconnect_0/M01_ACLK",
-          "axi_registers_0/s00_axi_aclk",
           "axi_interconnect_0/M02_ACLK",
-          "axi_config_registers_0/s00_axi_aclk"
+          "axi_registers_0/s00_axi_aclk"
         ]
       },
       "zynq_ultra_ps_e_0_pl_resetn0": {
