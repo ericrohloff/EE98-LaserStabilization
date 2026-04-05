@@ -75,7 +75,7 @@ module algorithm_top (
 	ramp_dac_spi u_ramp_dac_spi (
         .clk(clk),
         .reset(reset),
-        .enable(enable),
+        .enable(enable && system_on),
         .frame_tick(seq_frame_tick),
         .ramp_step(64),
         .ramp_min(16'd0),
@@ -90,7 +90,7 @@ module algorithm_top (
 	adc_frontend u_adc_frontend (
         .clk(clk),
         .reset(reset),
-        .enable(enable),
+        .enable(enable && system_on),
         .frame_tick(seq_frame_tick),
         .adc_miso(adc_miso),
         .adc_cnv(adc_cnv),
