@@ -16,7 +16,7 @@ module laser_controller (
 
     input logic [15:0] ref_wavelength,
 
-    output logic [16:0] feedback,
+    output logic [16:0] feedback
 );
 
 assign feedback = 0;

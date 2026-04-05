@@ -16,7 +16,7 @@ module laser_controller_wrapper (
 
     input logic [15:0] ref_wavelength,
 
-    output logic [16:0] feedback,
+    output logic [16:0] feedback
 );
 
 laser_controller u_laser_controller(
@@ -34,7 +34,7 @@ laser_controller u_laser_controller(
 
     .ref_wavelength(ref_wavelength),
 
-    .feedback(feedback),
+    .feedback(feedback)
 );
 
 endmodule
