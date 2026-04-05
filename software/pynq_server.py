@@ -2,7 +2,7 @@
 pynq_server.py
 --------------
 Server-side script that runs on the PYNQ FPGA board.
-Listens for a TCP connection from PYNQController, receives 18-byte binary
+Listens for a TCP connection from PYNQController, receives 21-byte binary
 command packets, dispatches them to the FPGA overlay, and sends a 1-byte ACK.
 
 Deploy:
@@ -16,18 +16,12 @@ Deploy:
 Packet format  (must match pynq_controller.py)
 ---------------------------------------------------------------------------
  Offset  Size  Type     Field
- ------  ----  -------  ----------------
-     0      1    uint8    cmd_id
-     1      1    uint8    laser_and_flags
-     2      4    uint32   pid_param1
-     6      4    uint32   pid_param2
-    10      4    uint32   pid_param3
-    14      4    uint32   duration
-    18 bytes total
-
-laser_and_flags byte:
-    high nibble: laser_id
-    low nibble : {0, laser_locked_flag, system_on_flag, laser_configured_flag}
+ ------  ----  -------  ------
+   0      1    uint8    cmd_id
+   1      4    int32    pid      (0 if unused by command)
+   5      8    float64  param1   wavelength_nm  |  duration_s  |  0.0
+  13      8    float64  param2   reserved (ignored)
+  21 bytes total
 
 ACK: 1 byte — 0x00 = ok, 0x01 = error
 """
@@ -42,8 +36,8 @@ from datetime import datetime
 # Packet / protocol constants  (keep in sync with pynq_controller.py)
 # ---------------------------------------------------------------------------
 
-PACKET_FORMAT = "!BBIIII"
-PACKET_SIZE   = struct.calcsize(PACKET_FORMAT)   # 18 bytes
+PACKET_FORMAT = "!Bidd"
+PACKET_SIZE   = struct.calcsize(PACKET_FORMAT)   # 21 bytes
 
 ACK_OK    = bytes([0x00])
 ACK_ERROR = bytes([0x01])
@@ -63,52 +57,6 @@ CMD_NAMES = {
     CMD_CREATE_LASER: "CREATE_LASER",
     CMD_REMOVE_LASER: "REMOVE_LASER",
 }
-
-
-def _decode_laser_and_flags(laser_and_flags: int):
-    laser_id = (laser_and_flags >> 4) & 0x0F
-    status_nibble = laser_and_flags & 0x0F
-    laser_locked_flag = bool((status_nibble >> 2) & 0x01)
-    system_on_flag = bool((status_nibble >> 1) & 0x01)
-    laser_configured_flag = bool(status_nibble & 0x01)
-    return laser_id, laser_locked_flag, system_on_flag, laser_configured_flag
-
-
-# Global flag memory
-SYSTEM_ON_FLAG = False
-LASER_CONFIGURED_FLAGS = {}
-LASER_LOCKED_FLAGS = {}
-
-
-def _laser_is_configured(laser_id: int) -> bool:
-    return bool(LASER_CONFIGURED_FLAGS.get(laser_id, False))
-
-
-def _laser_is_locked(laser_id: int) -> bool:
-    return bool(LASER_LOCKED_FLAGS.get(laser_id, False))
-
-
-def _expected_flags(laser_id: int):
-    return _laser_is_locked(laser_id), SYSTEM_ON_FLAG, _laser_is_configured(laser_id)
-
-
-def _update_flag_memory(cmd_id: int, laser_id: int) -> None:
-    global SYSTEM_ON_FLAG
-
-    if cmd_id == CMD_CREATE_LASER:
-        LASER_CONFIGURED_FLAGS[laser_id] = True
-        LASER_LOCKED_FLAGS[laser_id] = False
-    elif cmd_id == CMD_REMOVE_LASER:
-        LASER_CONFIGURED_FLAGS[laser_id] = False
-        LASER_LOCKED_FLAGS[laser_id] = False
-    elif cmd_id == CMD_LOCK_LASER:
-        LASER_LOCKED_FLAGS[laser_id] = True
-    elif cmd_id == CMD_UNLOCK_LASER:
-        LASER_LOCKED_FLAGS[laser_id] = False
-    elif cmd_id == CMD_START_CAVITY:
-        SYSTEM_ON_FLAG = True
-    elif cmd_id == CMD_STOP_CAVITY:
-        SYSTEM_ON_FLAG = False
 
 # ---------------------------------------------------------------------------
 # Server config
@@ -157,117 +105,61 @@ logger = _setup_logger()
 # from pynq import Overlay
 # overlay = Overlay("your_design.bit")
 
-def handle_create_laser(laser_id: int, pid_param1: int, pid_param2: int, pid_param3: int, duration: int) -> bool:
+def handle_create_laser(pid: int) -> bool:
     """Initialise a laser PID controller instance on the FPGA."""
-    # TODO: overlay.laser_ctrl.create(laser_id, pid_param1, pid_param2, pid_param3)
-    logger.debug(
-        "handle_create_laser | laser_id=%d | p1=%d p2=%d p3=%d dur=%d",
-        laser_id,
-        pid_param1,
-        pid_param2,
-        pid_param3,
-        duration,
-    )
+    # TODO: overlay.laser_ctrl.create(pid)
+    logger.debug("handle_create_laser | pid=%d", pid)
     return True
 
-def handle_remove_laser(laser_id: int) -> bool:
+def handle_remove_laser(pid: int) -> bool:
     """De-register a laser PID controller instance."""
-    # TODO: overlay.laser_ctrl.remove(laser_id)
-    logger.debug("handle_remove_laser | laser_id=%d", laser_id)
+    # TODO: overlay.laser_ctrl.remove(pid)
+    logger.debug("handle_remove_laser | pid=%d", pid)
     return True
 
-def handle_lock_laser(
-    laser_id: int,
-    pid_param1: int,
-    pid_param2: int,
-    pid_param3: int,
-    duration: int,
-    laser_locked_flag: bool,
-    system_on_flag: bool,
-    laser_configured_flag: bool,
-) -> bool:
-    """Set PID parameters and lock-state for a laser controller."""
-    # TODO: overlay.laser_ctrl.configure(laser_id, pid_param1, pid_param2, pid_param3)
-    # TODO: overlay.laser_ctrl.set_lock(laser_id, laser_locked_flag)
-    logger.debug(
-        "handle_lock_laser | laser_id=%d | lock=%d sys=%d cfg=%d | p1=%d p2=%d p3=%d dur=%d",
-        laser_id,
-        1 if laser_locked_flag else 0,
-        1 if system_on_flag else 0,
-        1 if laser_configured_flag else 0,
-        pid_param1,
-        pid_param2,
-        pid_param3,
-        duration,
-    )
+def handle_lock_laser(pid: int, wavelength: float) -> bool:
+    """Set target wavelength and enable closed-loop feedback for a laser."""
+    # TODO: overlay.laser_ctrl.set_target(pid, wavelength)
+    # TODO: overlay.laser_ctrl.enable_feedback(pid)
+    logger.debug("handle_lock_laser | pid=%d | wavelength=%.4f nm", pid, wavelength)
     return True
 
-def handle_unlock_laser(laser_id: int, laser_configured_flag: bool) -> bool:
+def handle_unlock_laser(pid: int) -> bool:
     """Disable closed-loop feedback for a laser."""
-    # TODO: overlay.laser_ctrl.set_lock(laser_id, False)
-    logger.debug(
-        "handle_unlock_laser | laser_id=%d | cfg=%d",
-        laser_id,
-        1 if laser_configured_flag else 0,
-    )
+    # TODO: overlay.laser_ctrl.disable_feedback(pid)
+    logger.debug("handle_unlock_laser | pid=%d", pid)
     return True
 
-def handle_start_cavity(laser_id: int, duration: int, pid_param1: int, pid_param2: int, pid_param3: int) -> bool:
-    """Start the triangular cavity ramp for the requested duration field."""
+def handle_start_cavity(duration: float) -> bool:
+    """Start the triangular cavity ramp for a given duration (seconds)."""
     # TODO: overlay.cavity_ctrl.start(duration)
-    logger.debug(
-        "handle_start_cavity | laser_id=%d | duration=%d | p1=%d p2=%d p3=%d",
-        laser_id,
-        duration,
-        pid_param1,
-        pid_param2,
-        pid_param3,
-    )
+    logger.debug("handle_start_cavity | duration=%.2f s", duration)
     return True
 
-def handle_stop_cavity(laser_id: int) -> bool:
+def handle_stop_cavity() -> bool:
     """Stop the cavity ramp immediately."""
     # TODO: overlay.cavity_ctrl.stop()
-    logger.debug("handle_stop_cavity | laser_id=%d", laser_id)
+    logger.debug("handle_stop_cavity")
     return True
 
 # ---------------------------------------------------------------------------
 # Dispatch table  (cmd_id -> callable)
 # ---------------------------------------------------------------------------
 
-def _dispatch(
-    cmd_id: int,
-    laser_id: int,
-    laser_locked_flag: bool,
-    system_on_flag: bool,
-    laser_configured_flag: bool,
-    pid_param1: int,
-    pid_param2: int,
-    pid_param3: int,
-    duration: int,
-) -> bool:
+def _dispatch(cmd_id: int, pid: int, param1: float) -> bool:
     """Route an unpacked command to the appropriate handler."""
     if cmd_id == CMD_CREATE_LASER:
-        return handle_create_laser(laser_id, pid_param1, pid_param2, pid_param3, duration)
+        return handle_create_laser(pid)
     elif cmd_id == CMD_REMOVE_LASER:
-        return handle_remove_laser(laser_id)
+        return handle_remove_laser(pid)
     elif cmd_id == CMD_LOCK_LASER:
-        return handle_lock_laser(
-            laser_id,
-            pid_param1,
-            pid_param2,
-            pid_param3,
-            duration,
-            laser_locked_flag,
-            system_on_flag,
-            laser_configured_flag,
-        )
+        return handle_lock_laser(pid, param1)
     elif cmd_id == CMD_UNLOCK_LASER:
-        return handle_unlock_laser(laser_id, laser_configured_flag)
+        return handle_unlock_laser(pid)
     elif cmd_id == CMD_START_CAVITY:
-        return handle_start_cavity(laser_id, duration, pid_param1, pid_param2, pid_param3)
+        return handle_start_cavity(param1)
     elif cmd_id == CMD_STOP_CAVITY:
-        return handle_stop_cavity(laser_id)
+        return handle_stop_cavity()
     else:
         logger.warning("Unknown cmd_id=0x%02X — ignoring.", cmd_id)
         return False
@@ -295,69 +187,18 @@ def handle_connection(conn: socket.socket, addr) -> None:
                     return
                 data += chunk
 
-            cmd_id, laser_and_flags, pid_param1, pid_param2, pid_param3, duration = struct.unpack(PACKET_FORMAT, data)
-            laser_id, laser_locked_flag, system_on_flag, laser_configured_flag = _decode_laser_and_flags(laser_and_flags)
+            cmd_id, pid, param1, _param2 = struct.unpack(PACKET_FORMAT, data)
             cmd_name = CMD_NAMES.get(cmd_id, f"0x{cmd_id:02X}")
-            expected_locked, expected_system_on, expected_configured = _expected_flags(laser_id)
-            if (
-                laser_locked_flag != expected_locked
-                or system_on_flag != expected_system_on
-                or laser_configured_flag != expected_configured
-            ):
-                logger.warning(
-                    "FLAG mismatch from client | laser_id=%d | rx(lock=%d sys=%d cfg=%d) expected(lock=%d sys=%d cfg=%d)",
-                    laser_id,
-                    1 if laser_locked_flag else 0,
-                    1 if system_on_flag else 0,
-                    1 if laser_configured_flag else 0,
-                    1 if expected_locked else 0,
-                    1 if expected_system_on else 0,
-                    1 if expected_configured else 0,
-                )
             logger.debug(
-                "RX << cmd=%s laser_id=%d lock=%d sys=%d cfg=%d p1=%d p2=%d p3=%d dur=%d",
-                cmd_name,
-                laser_id,
-                1 if laser_locked_flag else 0,
-                1 if system_on_flag else 0,
-                1 if laser_configured_flag else 0,
-                pid_param1,
-                pid_param2,
-                pid_param3,
-                duration,
+                "RX << cmd=%s pid=%d param1=%.6g",
+                cmd_name, pid, param1,
             )
 
-            success = _dispatch(
-                cmd_id,
-                laser_id,
-                laser_locked_flag,
-                system_on_flag,
-                laser_configured_flag,
-                pid_param1,
-                pid_param2,
-                pid_param3,
-                duration,
-            )
-            if success:
-                _update_flag_memory(cmd_id, laser_id)
-
-            mem_locked, mem_system_on, mem_configured = _expected_flags(laser_id)
+            success = _dispatch(cmd_id, pid, param1)
             conn.sendall(ACK_OK if success else ACK_ERROR)
             logger.info(
-                "CMD %-14s | laser_id=%d | rx(lock=%d sys=%d cfg=%d) | mem(lock=%d sys=%d cfg=%d) | p1=%d p2=%d p3=%d dur=%d | ack=%s",
-                cmd_name,
-                laser_id,
-                1 if laser_locked_flag else 0,
-                1 if system_on_flag else 0,
-                1 if laser_configured_flag else 0,
-                1 if mem_locked else 0,
-                1 if mem_system_on else 0,
-                1 if mem_configured else 0,
-                pid_param1,
-                pid_param2,
-                pid_param3,
-                duration,
-                "OK" if success else "ERROR",
+                "CMD %-14s | pid=%d | param1=%.6g | ack=%s",
+                cmd_name, pid, param1, "OK" if success else "ERROR",
             )
 
     except socket.timeout:

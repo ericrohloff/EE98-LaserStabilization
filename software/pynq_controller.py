@@ -8,38 +8,30 @@ Usage:
     controller = PYNQController(server_ip="192.168.1.100", server_port=5000)
     controller.connect()
     controller.create_laser(pid=1)
-    controller.lock_laser(pid=1, pid_param1=1550)
-    controller.start_cavity(duration=10)
+    controller.lock_laser(pid=1, wavelength=1550.0)
+    controller.start_cavity(duration=10.0)
     controller.disconnect()
 
     # Or as a context manager:
     with PYNQController(server_ip="192.168.1.100", server_port=5000) as ctrl:
         ctrl.create_laser(pid=1)
-        ctrl.lock_laser(pid=1, pid_param1=1550)
+        ctrl.lock_laser(pid=1, wavelength=1550.0)
 
 ---------------------------------------------------------------------------
-Binary packet format  (18 bytes, big-endian / network byte order)
+Binary packet format  (21 bytes, big-endian / network byte order)
 ---------------------------------------------------------------------------
 
- Offset  Size  Type     Field           Description
- ------  ----  -------  -------------   ------------------------------------
-     0      1    uint8    cmd_id          Command identifier (see _CMD_ID)
-    1      1    uint8    laser_and_flags [7:4]=laser_id, [2]=laser_locked, [1]=system_on, [0]=laser_configured
-     2      4    uint32   pid_param1      PID parameter 1
-     6      4    uint32   pid_param2      PID parameter 2
-    10      4    uint32   pid_param3      PID parameter 3
-    14      4    uint32   duration        Duration field
+ Offset  Size  Type     Field    Description
+ ------  ----  -------  -------  ------------------------------------
+   0      1    uint8    cmd_id   Command identifier (see _CMD_ID)
+   1      4    int32    pid      Laser ID (0 if unused)
+   5      8    float64  param1   wavelength (nm) or duration (s)
+  13      8    float64  param2   Reserved (always 0.0)
  ------
-    18 bytes total
+  21 bytes total
 
 PYNQ-side (Python):
-        CMD_ID, LASER_FLAGS, P1, P2, P3, DURATION = struct.unpack('!BBIIII', data)
-
-Status nibble layout (low nibble):
-    bit3: 0 (reserved)
-    bit2: laser_locked_flag
-    bit1: system_on_flag
-    bit0: laser_configured_flag
+    CMD_ID, PID, PARAM1, PARAM2 = struct.unpack('!Bidd', data)
 
 ---------------------------------------------------------------------------
 ACK format  (1 byte)
@@ -61,43 +53,11 @@ from typing import Optional
 # Packet constants
 # ---------------------------------------------------------------------------
 
-PACKET_FORMAT = "!BBIIII"        # uint8, uint8, uint32, uint32, uint32, uint32
-PACKET_SIZE   = struct.calcsize(PACKET_FORMAT)   # 18 bytes
+PACKET_FORMAT = "!Bidd"          # network byte order: uint8, int32, float64, float64
+PACKET_SIZE   = struct.calcsize(PACKET_FORMAT)   # 21 bytes
 
 ACK_OK    = 0x00
 ACK_ERROR = 0x01
-
-_NIBBLE_MAX = 0x0F
-_UINT32_MAX = 0xFFFFFFFF
-
-
-def _validate_nibble(name: str, value: int) -> int:
-    v = int(value)
-    if v < 0 or v > _NIBBLE_MAX:
-        raise ValueError(f"{name} must be in range [0, 15], got {value}.")
-    return v
-
-
-def _validate_uint32(name: str, value: int) -> int:
-    v = int(value)
-    if v < 0 or v > _UINT32_MAX:
-        raise ValueError(f"{name} must be in range [0, 4294967295], got {value}.")
-    return v
-
-
-def _pack_laser_and_flags(
-    laser_id: int,
-    laser_locked_flag: bool,
-    system_on_flag: bool,
-    laser_configured_flag: bool,
-) -> int:
-    lid = _validate_nibble("laser_id", laser_id)
-    status_nibble = (
-        ((1 if laser_locked_flag else 0) << 2)
-        | ((1 if system_on_flag else 0) << 1)
-        | (1 if laser_configured_flag else 0)
-    )
-    return (lid << 4) | status_nibble
 
 
 # ---------------------------------------------------------------------------
@@ -132,7 +92,7 @@ class PYNQController:
     Manages a TCP socket connection to a PYNQ FPGA board and exposes
     high-level methods for each supported command.
 
-    Each command is serialised into an 18-byte binary packet and sent over
+    Each command is serialised into a 21-byte binary packet and sent over
     a persistent TCP connection.  After every send the controller reads a
     1-byte ACK from the board (0x00 = ok, 0x01 = error).
 
@@ -156,9 +116,6 @@ class PYNQController:
         self.timeout     = timeout
         self._socket: Optional[socket.socket] = None
         self._connected  = False
-        self._laser_configured = {}
-        self._laser_locked = {}
-        self._system_on = False
 
         if log_file is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -201,38 +158,22 @@ class PYNQController:
     def _build_packet(
         self,
         command: CommandType,
-        laser_id: int = 0,
-        laser_locked_flag: bool = False,
-        system_on_flag: bool = False,
-        laser_configured_flag: bool = False,
-        pid_param1: int = 0,
-        pid_param2: int = 0,
-        pid_param3: int = 0,
-        duration: int = 0,
+        pid: int   = 0,
+        param1: float = 0.0,
+        param2: float = 0.0,
     ) -> bytes:
         """
         Pack a command into a fixed-width binary packet.
 
-        Packet fields:
-          byte0: cmd_id
-                    byte1: [7:4]=laser_id, [3:0]={0, laser_locked_flag, system_on_flag, laser_configured_flag}
-          byte2..17: pid_param1, pid_param2, pid_param3, duration
+        Parameters map to fields as follows:
+          LOCK_LASER   : pid=pid,  param1=wavelength_nm
+          UNLOCK_LASER : pid=pid
+          CREATE_LASER : pid=pid
+          REMOVE_LASER : pid=pid
+          START_CAVITY : param1=duration_s
+          STOP_CAVITY  : (no params)
         """
-        laser_flags = _pack_laser_and_flags(
-            laser_id=laser_id,
-            laser_locked_flag=laser_locked_flag,
-                        system_on_flag=system_on_flag,
-            laser_configured_flag=laser_configured_flag,
-        )
-        return struct.pack(
-            PACKET_FORMAT,
-            _CMD_ID[command],
-            laser_flags,
-            _validate_uint32("pid_param1", pid_param1),
-            _validate_uint32("pid_param2", pid_param2),
-            _validate_uint32("pid_param3", pid_param3),
-            _validate_uint32("duration", duration),
-        )
+        return struct.pack(PACKET_FORMAT, _CMD_ID[command], pid, param1, param2)
 
     def _recv_ack(self, command: CommandType) -> bool:
         """
@@ -265,14 +206,9 @@ class PYNQController:
     def _send(
         self,
         command: CommandType,
-        laser_id: int = 0,
-        laser_locked_flag: bool = False,
-        system_on_flag: bool = False,
-        laser_configured_flag: bool = False,
-        pid_param1: int = 0,
-        pid_param2: int = 0,
-        pid_param3: int = 0,
-        duration: int = 0,
+        pid: int   = 0,
+        param1: float = 0.0,
+        param2: float = 0.0,
     ) -> bool:
         """
         Build, transmit, and ACK-verify a command.
@@ -284,29 +220,10 @@ class PYNQController:
             )
             return False
 
-        packet = self._build_packet(
-            command=command,
-            laser_id=laser_id,
-            laser_locked_flag=laser_locked_flag,
-            system_on_flag=system_on_flag,
-            laser_configured_flag=laser_configured_flag,
-            pid_param1=pid_param1,
-            pid_param2=pid_param2,
-            pid_param3=pid_param3,
-            duration=duration,
-        )
+        packet = self._build_packet(command, pid, param1, param2)
         self._logger.debug(
-            "TX >> cmd=0x%02X laser_id=%d lock=%d sys=%d cfg=%d p1=%d p2=%d p3=%d dur=%d (%dB)",
-            _CMD_ID[command],
-            laser_id,
-            1 if laser_locked_flag else 0,
-            1 if system_on_flag else 0,
-            1 if laser_configured_flag else 0,
-            pid_param1,
-            pid_param2,
-            pid_param3,
-            duration,
-            PACKET_SIZE,
+            "TX >> cmd=0x%02X pid=%d param1=%.6g param2=%.6g (%dB)",
+            _CMD_ID[command], pid, param1, param2, PACKET_SIZE,
         )
 
         try:
@@ -368,78 +285,17 @@ class PYNQController:
     # Laser commands
     # ------------------------------------------------------------------
 
-    def _laser_is_configured(self, laser_id: int) -> bool:
-        return bool(self._laser_configured.get(laser_id, False))
-
-    def _laser_is_locked(self, laser_id: int) -> bool:
-        return bool(self._laser_locked.get(laser_id, False))
-
-    def send_command(
-        self,
-        command: CommandType,
-        laser_id: int = 0,
-        laser_locked_flag: bool = False,
-        system_on_flag: bool = False,
-        laser_configured_flag: bool = False,
-        pid_param1: int = 0,
-        pid_param2: int = 0,
-        pid_param3: int = 0,
-        duration: int = 0,
-    ) -> bool:
-        """Send a raw command packet using the full protocol field set."""
-        return self._send(
-            command=command,
-            laser_id=laser_id,
-            laser_locked_flag=laser_locked_flag,
-            system_on_flag=system_on_flag,
-            laser_configured_flag=laser_configured_flag,
-            pid_param1=pid_param1,
-            pid_param2=pid_param2,
-            pid_param3=pid_param3,
-            duration=duration,
-        )
-
-    def lock_laser(
-        self,
-        pid: int,
-        pid_param1: int,
-        pid_param2: int = 0,
-        pid_param3: int = 0,
-        duration: int = 0,
-    ) -> bool:
+    def lock_laser(self, pid: int, wavelength: float) -> bool:
         """
-        Lock a laser using packetized PID parameter fields.
+        Lock a laser to a target wavelength.
 
         Parameters
         ----------
-        pid         : Laser ID (nibble field in packet).
-        pid_param1  : PID parameter 1 (uint32).
-        pid_param2  : PID parameter 2 (uint32).
-        pid_param3  : PID parameter 3 (uint32).
-        duration    : Duration field (uint32).
+        pid        : Laser process/device ID.
+        wavelength : Target wavelength in nanometres (nm).
         """
-        self._logger.info(
-            "Locking laser | laser_id=%d | p1=%d p2=%d p3=%d dur=%d",
-            pid,
-            pid_param1,
-            pid_param2,
-            pid_param3,
-            duration,
-        )
-        success = self._send(
-            CommandType.LOCK_LASER,
-            laser_id=pid,
-            laser_locked_flag=True,
-            system_on_flag=self._system_on,
-            laser_configured_flag=self._laser_is_configured(pid),
-            pid_param1=pid_param1,
-            pid_param2=pid_param2,
-            pid_param3=pid_param3,
-            duration=duration,
-        )
-        if success:
-            self._laser_locked[pid] = True
-        return success
+        self._logger.info("Locking laser | PID=%d | wavelength=%.4f nm", pid, wavelength)
+        return self._send(CommandType.LOCK_LASER, pid=pid, param1=wavelength)
 
     def unlock_laser(self, pid: int) -> bool:
         """
@@ -447,28 +303,12 @@ class PYNQController:
 
         Parameters
         ----------
-        pid : Laser ID nibble to unlock.
+        pid : Laser process/device ID to unlock.
         """
-        self._logger.info("Unlocking laser | laser_id=%d", pid)
-        success = self._send(
-            CommandType.UNLOCK_LASER,
-            laser_id=pid,
-            laser_locked_flag=False,
-            system_on_flag=self._system_on,
-            laser_configured_flag=self._laser_is_configured(pid),
-        )
-        if success:
-            self._laser_locked[pid] = False
-        return success
+        self._logger.info("Unlocking laser | PID=%d", pid)
+        return self._send(CommandType.UNLOCK_LASER, pid=pid)
 
-    def create_laser(
-        self,
-        pid: int,
-        pid_param1: int = 0,
-        pid_param2: int = 0,
-        pid_param3: int = 0,
-        duration: int = 0,
-    ) -> bool:
+    def create_laser(self, pid: int) -> bool:
         """
         Register / initialise a new laser resource on the PYNQ board.
 
@@ -476,29 +316,8 @@ class PYNQController:
         ----------
         pid : Identifier for the new laser.
         """
-        self._logger.info(
-            "Creating laser | laser_id=%d | p1=%d p2=%d p3=%d dur=%d",
-            pid,
-            pid_param1,
-            pid_param2,
-            pid_param3,
-            duration,
-        )
-        success = self._send(
-            CommandType.CREATE_LASER,
-            laser_id=pid,
-            laser_locked_flag=False,
-            system_on_flag=self._system_on,
-            laser_configured_flag=True,
-            pid_param1=pid_param1,
-            pid_param2=pid_param2,
-            pid_param3=pid_param3,
-            duration=duration,
-        )
-        if success:
-            self._laser_configured[pid] = True
-            self._laser_locked[pid] = False
-        return success
+        self._logger.info("Creating laser | PID=%d", pid)
+        return self._send(CommandType.CREATE_LASER, pid=pid)
 
     def remove_laser(self, pid: int) -> bool:
         """
@@ -508,58 +327,28 @@ class PYNQController:
         ----------
         pid : Identifier of the laser to remove.
         """
-        self._logger.info("Removing laser | laser_id=%d", pid)
-        success = self._send(
-            CommandType.REMOVE_LASER,
-            laser_id=pid,
-            laser_locked_flag=False,
-            system_on_flag=self._system_on,
-            laser_configured_flag=False,
-        )
-        if success:
-            self._laser_configured[pid] = False
-            self._laser_locked[pid] = False
-        return success
+        self._logger.info("Removing laser | PID=%d", pid)
+        return self._send(CommandType.REMOVE_LASER, pid=pid)
 
     # ------------------------------------------------------------------
     # Cavity commands
     # ------------------------------------------------------------------
 
-    def start_cavity(self, duration: int, laser_id: int = 0) -> bool:
+    def start_cavity(self, duration: float) -> bool:
         """
         Start the optical cavity scan for a specified duration.
 
         Parameters
         ----------
-        duration : Duration field (uint32).
-        laser_id : Laser ID nibble (optional, defaults to 0).
+        duration : Run duration in seconds.
         """
-        self._logger.info("Starting cavity | laser_id=%d | duration=%d", laser_id, duration)
-        success = self._send(
-            CommandType.START_CAVITY,
-            laser_id=laser_id,
-            laser_locked_flag=self._laser_is_locked(laser_id),
-            system_on_flag=True,
-            laser_configured_flag=self._laser_is_configured(laser_id),
-            duration=duration,
-        )
-        if success:
-            self._system_on = True
-        return success
+        self._logger.info("Starting cavity | duration=%.2f s", duration)
+        return self._send(CommandType.START_CAVITY, param1=duration)
 
-    def stop_cavity(self, laser_id: int = 0) -> bool:
+    def stop_cavity(self) -> bool:
         """Immediately stop the optical cavity scan."""
-        self._logger.info("Stopping cavity | laser_id=%d", laser_id)
-        success = self._send(
-            CommandType.STOP_CAVITY,
-            laser_id=laser_id,
-            laser_locked_flag=self._laser_is_locked(laser_id),
-            system_on_flag=False,
-            laser_configured_flag=self._laser_is_configured(laser_id),
-        )
-        if success:
-            self._system_on = False
-        return success
+        self._logger.info("Stopping cavity.")
+        return self._send(CommandType.STOP_CAVITY)
 
     # ------------------------------------------------------------------
     # Context-manager support
@@ -596,17 +385,10 @@ if __name__ == "__main__":
         if not ctrl.is_connected:
             print("Could not reach PYNQ board – check IP/port and board status.")
         else:
-            ctrl.create_laser(pid=1, pid_param1=100, pid_param2=10, pid_param3=1)
-            ctrl.create_laser(pid=2, pid_param1=120, pid_param2=12, pid_param3=2)
-
-            ctrl.lock_laser(pid=1, pid_param1=1500, pid_param2=20, pid_param3=3, duration=15)
-            ctrl.start_cavity(duration=30, laser_id=1)
+            ctrl.create_laser(pid=1)
+            ctrl.lock_laser(pid=1, wavelength=1550.12)
+            ctrl.start_cavity(duration=30.0)
             time.sleep(1)
-
-            ctrl.lock_laser(pid=2, pid_param1=1550, pid_param2=25, pid_param3=2, duration=10)
-            ctrl.stop_cavity(laser_id=1)
-
+            ctrl.stop_cavity()
             ctrl.unlock_laser(pid=1)
-            ctrl.unlock_laser(pid=2)
             ctrl.remove_laser(pid=1)
-            ctrl.remove_laser(pid=2)
