@@ -58,7 +58,7 @@
         output wire [31:0] l4_pid_p,
         output wire [31:0] l4_pid_i,
         output wire [31:0] l4_pid_d,
-        output wire [15:0] l4_set_set_wavelength,
+        output wire [15:0] l4_set_wavelength,
         input  wire [15:0] l4_detected_wavelength,
 
 
@@ -169,7 +169,7 @@
         .l4_pid_p(l4_pid_p),
         .l4_pid_i(l4_pid_i),
         .l4_pid_d(l4_pid_d),
-        .l4_set_set_wavelength(l4_set_set_wavelength), // (kept your original name)
+        .l4_set_wavelength(l4_set_wavelength), // (kept your original name)
         .l4_detected_wavelength(l4_detected_wavelength),
     
         // Global

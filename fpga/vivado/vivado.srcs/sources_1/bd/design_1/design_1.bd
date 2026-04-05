@@ -7,8 +7,7 @@
       "name": "design_1",
       "rev_ctrl_bd_flag": "RevCtrlBdOff",
       "synth_flow_mode": "None",
-      "tool_version": "2022.1",
-      "validated": "true"
+      "tool_version": "2022.1"
     },
     "design_tree": {
       "zynq_ultra_ps_e_0": "",
@@ -19,7 +18,8 @@
           "auto_pc": ""
         },
         "m00_couplers": {},
-        "m01_couplers": {}
+        "m01_couplers": {},
+        "m02_couplers": {}
       },
       "axi_gpio_0": "",
       "clk_wiz_0": "",
@@ -27,12 +27,18 @@
       "ramp_step": "",
       "ramp_min": "",
       "ramp_max": "",
-      "ramp_step1": "",
+      "triangle_mode": "",
       "spi_enable": "",
       "proc_sys_reset_1": "",
-      "ramp_dac_spi_wrapper_0": "",
       "axi_registers_0": "",
-      "adc_frontend_wrapper_0": ""
+      "adc_frontend_wrapper_0": "",
+      "axi_config_registers_0": "",
+      "ramp_dac_spi_wrapper_0": "",
+      "peak_detection_wrapp_0": "",
+      "laser_controller_wra_0": "",
+      "laser_controller_wra_1": "",
+      "laser_controller_wra_2": "",
+      "laser_controller_wra_3": ""
     },
     "interface_ports": {
       "led_8bits": {
@@ -45,10 +51,6 @@
         "vlnv_bus_definition": "xilinx.com:interface:diff_clock:1.0",
         "vlnv": "xilinx.com:interface:diff_clock_rtl:1.0",
         "parameters": {
-          "CAN_DEBUG": {
-            "value": "false",
-            "value_src": "default"
-          },
           "FREQ_HZ": {
             "value": "100000000"
           }
@@ -58,75 +60,33 @@
     "ports": {
       "clk_output": {
         "type": "data",
-        "direction": "O",
-        "parameters": {
-          "LAYERED_METADATA": {
-            "value": "undef",
-            "value_src": "default"
-          }
-        }
+        "direction": "O"
       },
       "dac_cs": {
         "type": "data",
-        "direction": "O",
-        "parameters": {
-          "LAYERED_METADATA": {
-            "value": "undef",
-            "value_src": "default"
-          }
-        }
+        "direction": "O"
       },
       "dac_mosi": {
         "type": "data",
-        "direction": "O",
-        "parameters": {
-          "LAYERED_METADATA": {
-            "value": "undef",
-            "value_src": "default"
-          }
-        }
+        "direction": "O"
       },
       "dac_ldac_n": {
         "type": "data",
         "direction": "O",
         "left": "0",
-        "right": "0",
-        "parameters": {
-          "LAYERED_METADATA": {
-            "value": "undef",
-            "value_src": "default"
-          }
-        }
+        "right": "0"
       },
       "adc_miso": {
         "type": "data",
-        "direction": "I",
-        "parameters": {
-          "LAYERED_METADATA": {
-            "value": "undef",
-            "value_src": "default"
-          }
-        }
+        "direction": "I"
       },
       "adc_cnv": {
         "type": "data",
-        "direction": "O",
-        "parameters": {
-          "LAYERED_METADATA": {
-            "value": "undef",
-            "value_src": "default"
-          }
-        }
+        "direction": "O"
       },
       "adc_sck": {
         "type": "data",
-        "direction": "O",
-        "parameters": {
-          "LAYERED_METADATA": {
-            "value": "undef",
-            "value_src": "default"
-          }
-        }
+        "direction": "O"
       }
     },
     "components": {
@@ -3165,6 +3125,11 @@
         "xci_path": "ip/design_1_axi_interconnect_0_0/design_1_axi_interconnect_0_0.xci",
         "inst_hier_path": "axi_interconnect_0",
         "xci_name": "design_1_axi_interconnect_0_0",
+        "parameters": {
+          "NUM_MI": {
+            "value": "3"
+          }
+        },
         "interface_ports": {
           "S00_AXI": {
             "mode": "Slave",
@@ -3177,6 +3142,11 @@
             "vlnv": "xilinx.com:interface:aximm_rtl:1.0"
           },
           "M01_AXI": {
+            "mode": "Master",
+            "vlnv_bus_definition": "xilinx.com:interface:aximm:1.0",
+            "vlnv": "xilinx.com:interface:aximm_rtl:1.0"
+          },
+          "M02_AXI": {
             "mode": "Master",
             "vlnv_bus_definition": "xilinx.com:interface:aximm:1.0",
             "vlnv": "xilinx.com:interface:aximm_rtl:1.0"
@@ -3243,6 +3213,22 @@
           "M01_ARESETN": {
             "type": "rst",
             "direction": "I"
+          },
+          "M02_ACLK": {
+            "type": "clk",
+            "direction": "I",
+            "parameters": {
+              "ASSOCIATED_BUSIF": {
+                "value": "M02_AXI"
+              },
+              "ASSOCIATED_RESET": {
+                "value": "M02_ARESETN"
+              }
+            }
+          },
+          "M02_ARESETN": {
+            "type": "rst",
+            "direction": "I"
           }
         },
         "components": {
@@ -3253,7 +3239,7 @@
             "inst_hier_path": "axi_interconnect_0/xbar",
             "parameters": {
               "NUM_MI": {
-                "value": "2"
+                "value": "3"
               },
               "NUM_SI": {
                 "value": "1"
@@ -3268,7 +3254,8 @@
                 "mode": "Slave",
                 "bridges": [
                   "M00_AXI",
-                  "M01_AXI"
+                  "M01_AXI",
+                  "M02_AXI"
                 ]
               }
             }
@@ -3485,6 +3472,62 @@
                 ]
               }
             }
+          },
+          "m02_couplers": {
+            "interface_ports": {
+              "M_AXI": {
+                "mode": "Master",
+                "vlnv_bus_definition": "xilinx.com:interface:aximm:1.0",
+                "vlnv": "xilinx.com:interface:aximm_rtl:1.0"
+              },
+              "S_AXI": {
+                "mode": "Slave",
+                "vlnv_bus_definition": "xilinx.com:interface:aximm:1.0",
+                "vlnv": "xilinx.com:interface:aximm_rtl:1.0"
+              }
+            },
+            "ports": {
+              "M_ACLK": {
+                "type": "clk",
+                "direction": "I",
+                "parameters": {
+                  "ASSOCIATED_BUSIF": {
+                    "value": "M_AXI"
+                  },
+                  "ASSOCIATED_RESET": {
+                    "value": "M_ARESETN"
+                  }
+                }
+              },
+              "M_ARESETN": {
+                "type": "rst",
+                "direction": "I"
+              },
+              "S_ACLK": {
+                "type": "clk",
+                "direction": "I",
+                "parameters": {
+                  "ASSOCIATED_BUSIF": {
+                    "value": "S_AXI"
+                  },
+                  "ASSOCIATED_RESET": {
+                    "value": "S_ARESETN"
+                  }
+                }
+              },
+              "S_ARESETN": {
+                "type": "rst",
+                "direction": "I"
+              }
+            },
+            "interface_nets": {
+              "m02_couplers_to_m02_couplers": {
+                "interface_ports": [
+                  "S_AXI",
+                  "M_AXI"
+                ]
+              }
+            }
           }
         },
         "interface_nets": {
@@ -3506,6 +3549,12 @@
               "m01_couplers/M_AXI"
             ]
           },
+          "m02_couplers_to_axi_interconnect_0": {
+            "interface_ports": [
+              "M02_AXI",
+              "m02_couplers/M_AXI"
+            ]
+          },
           "s00_couplers_to_xbar": {
             "interface_ports": [
               "s00_couplers/M_AXI",
@@ -3523,6 +3572,12 @@
               "xbar/M01_AXI",
               "m01_couplers/S_AXI"
             ]
+          },
+          "xbar_to_m02_couplers": {
+            "interface_ports": [
+              "xbar/M02_AXI",
+              "m02_couplers/S_AXI"
+            ]
           }
         },
         "nets": {
@@ -3534,8 +3589,10 @@
               "s00_couplers/M_ACLK",
               "m00_couplers/M_ACLK",
               "m01_couplers/M_ACLK",
+              "m02_couplers/M_ACLK",
               "m00_couplers/S_ACLK",
-              "m01_couplers/S_ACLK"
+              "m01_couplers/S_ACLK",
+              "m02_couplers/S_ACLK"
             ]
           },
           "axi_interconnect_0_ARESETN_net": {
@@ -3546,8 +3603,10 @@
               "s00_couplers/M_ARESETN",
               "m00_couplers/M_ARESETN",
               "m01_couplers/M_ARESETN",
+              "m02_couplers/M_ARESETN",
               "m00_couplers/S_ARESETN",
-              "m01_couplers/S_ARESETN"
+              "m01_couplers/S_ARESETN",
+              "m02_couplers/S_ARESETN"
             ]
           }
         }
@@ -3759,11 +3818,11 @@
           }
         }
       },
-      "ramp_step1": {
+      "triangle_mode": {
         "vlnv": "xilinx.com:ip:xlconstant:1.1",
         "xci_name": "design_1_ramp_step_2",
         "xci_path": "ip/design_1_ramp_step_2/design_1_ramp_step_2.xci",
-        "inst_hier_path": "ramp_step1",
+        "inst_hier_path": "triangle_mode",
         "parameters": {
           "CONST_VAL": {
             "value": "0"
@@ -3784,97 +3843,6 @@
         "xci_name": "design_1_proc_sys_reset_1_0",
         "xci_path": "ip/design_1_proc_sys_reset_1_0/design_1_proc_sys_reset_1_0.xci",
         "inst_hier_path": "proc_sys_reset_1"
-      },
-      "ramp_dac_spi_wrapper_0": {
-        "vlnv": "xilinx.com:module_ref:ramp_dac_spi_wrapper:1.0",
-        "xci_name": "design_1_ramp_dac_spi_wrapper_0_0",
-        "xci_path": "ip/design_1_ramp_dac_spi_wrapper_0_0/design_1_ramp_dac_spi_wrapper_0_0.xci",
-        "inst_hier_path": "ramp_dac_spi_wrapper_0",
-        "reference_info": {
-          "ref_type": "hdl",
-          "ref_name": "ramp_dac_spi_wrapper",
-          "boundary_crc": "0x0"
-        },
-        "ports": {
-          "clk": {
-            "type": "clk",
-            "direction": "I",
-            "parameters": {
-              "ASSOCIATED_RESET": {
-                "value": "reset",
-                "value_src": "constant"
-              },
-              "FREQ_HZ": {
-                "value": "100000000",
-                "value_src": "ip_prop"
-              },
-              "PHASE": {
-                "value": "0.0",
-                "value_src": "ip_prop"
-              },
-              "CLK_DOMAIN": {
-                "value": "design_1_clk_wiz_0_0_clk_out1",
-                "value_src": "default_prop"
-              }
-            }
-          },
-          "reset": {
-            "type": "rst",
-            "direction": "I",
-            "parameters": {
-              "POLARITY": {
-                "value": "ACTIVE_HIGH",
-                "value_src": "const_prop"
-              }
-            }
-          },
-          "enable": {
-            "direction": "I"
-          },
-          "frame_tick": {
-            "direction": "I",
-            "left": "6",
-            "right": "0"
-          },
-          "ramp_step": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "ramp_min": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "ramp_max": {
-            "direction": "I",
-            "left": "15",
-            "right": "0"
-          },
-          "triangle_mode": {
-            "direction": "I"
-          },
-          "ramp_dac_cs_n": {
-            "direction": "O"
-          },
-          "ramp_dac_sck": {
-            "direction": "O"
-          },
-          "ramp_dac_mosi": {
-            "direction": "O"
-          },
-          "ramp_dac_ldac_n": {
-            "direction": "O"
-          },
-          "current_ramp_pos": {
-            "direction": "O",
-            "left": "15",
-            "right": "0"
-          },
-          "ramp_cycle_start": {
-            "direction": "O"
-          }
-        }
       },
       "axi_registers_0": {
         "vlnv": "user.org:user:axi_registers:1.0",
@@ -3957,6 +3925,399 @@
             "direction": "O"
           }
         }
+      },
+      "axi_config_registers_0": {
+        "vlnv": "user.org:user:axi_config_registers:1.0",
+        "xci_name": "design_1_axi_config_registers_0_1",
+        "xci_path": "ip/design_1_axi_config_registers_0_1/design_1_axi_config_registers_0_1.xci",
+        "inst_hier_path": "axi_config_registers_0"
+      },
+      "ramp_dac_spi_wrapper_0": {
+        "vlnv": "xilinx.com:module_ref:ramp_dac_spi_wrapper:1.0",
+        "xci_name": "design_1_ramp_dac_spi_wrapper_0_0",
+        "xci_path": "ip/design_1_ramp_dac_spi_wrapper_0_0/design_1_ramp_dac_spi_wrapper_0_0.xci",
+        "inst_hier_path": "ramp_dac_spi_wrapper_0",
+        "reference_info": {
+          "ref_type": "hdl",
+          "ref_name": "ramp_dac_spi_wrapper",
+          "boundary_crc": "0x0"
+        },
+        "ports": {
+          "clk": {
+            "type": "clk",
+            "direction": "I",
+            "parameters": {
+              "ASSOCIATED_RESET": {
+                "value": "reset",
+                "value_src": "constant"
+              }
+            }
+          },
+          "reset": {
+            "type": "rst",
+            "direction": "I"
+          },
+          "enable": {
+            "direction": "I"
+          },
+          "frame_tick": {
+            "direction": "I",
+            "left": "6",
+            "right": "0"
+          },
+          "ramp_step": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "ramp_min": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "ramp_max": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "triangle_mode": {
+            "direction": "I"
+          },
+          "ramp_dac_cs_n": {
+            "direction": "O"
+          },
+          "ramp_dac_sck": {
+            "direction": "O"
+          },
+          "ramp_dac_mosi": {
+            "direction": "O"
+          },
+          "ramp_dac_ldac_n": {
+            "direction": "O"
+          },
+          "current_ramp_pos": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "ramp_cycle_start": {
+            "direction": "O"
+          }
+        }
+      },
+      "peak_detection_wrapp_0": {
+        "vlnv": "xilinx.com:module_ref:peak_detection_wrapper:1.0",
+        "xci_name": "design_1_peak_detection_wrapp_0_0",
+        "xci_path": "ip/design_1_peak_detection_wrapp_0_0/design_1_peak_detection_wrapp_0_0.xci",
+        "inst_hier_path": "peak_detection_wrapp_0",
+        "reference_info": {
+          "ref_type": "hdl",
+          "ref_name": "peak_detection_wrapper",
+          "boundary_crc": "0x0"
+        },
+        "ports": {
+          "adc_sample": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "ramp_start": {
+            "direction": "I"
+          },
+          "ref_target": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "l1_target": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "l2_target": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "l3_target": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "l4_target": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "l1_position": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "l2_position": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "l3_position": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "l4_position": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          }
+        }
+      },
+      "laser_controller_wra_0": {
+        "vlnv": "xilinx.com:module_ref:laser_controller_wrapper:1.0",
+        "xci_name": "design_1_laser_controller_wra_0_0",
+        "xci_path": "ip/design_1_laser_controller_wra_0_0/design_1_laser_controller_wra_0_0.xci",
+        "inst_hier_path": "laser_controller_wra_0",
+        "reference_info": {
+          "ref_type": "unknown",
+          "ref_name": "laser_controller_wrapper",
+          "boundary_crc": "0x0"
+        },
+        "ports": {
+          "ramp_start": {
+            "direction": "I"
+          },
+          "laser_id": {
+            "direction": "I",
+            "left": "3",
+            "right": "0"
+          },
+          "laser_exists": {
+            "direction": "I"
+          },
+          "laser_locked": {
+            "direction": "I"
+          },
+          "pid_p": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "pid_i": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "pid_d": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "set_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "current_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "ref_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "feedback": {
+            "direction": "O",
+            "left": "16",
+            "right": "0"
+          }
+        }
+      },
+      "laser_controller_wra_1": {
+        "vlnv": "xilinx.com:module_ref:laser_controller_wrapper:1.0",
+        "xci_name": "design_1_laser_controller_wra_0_1",
+        "xci_path": "ip/design_1_laser_controller_wra_0_1/design_1_laser_controller_wra_0_1.xci",
+        "inst_hier_path": "laser_controller_wra_1",
+        "reference_info": {
+          "ref_type": "unknown",
+          "ref_name": "laser_controller_wrapper",
+          "boundary_crc": "0x0"
+        },
+        "ports": {
+          "ramp_start": {
+            "direction": "I"
+          },
+          "laser_id": {
+            "direction": "I",
+            "left": "3",
+            "right": "0"
+          },
+          "laser_exists": {
+            "direction": "I"
+          },
+          "laser_locked": {
+            "direction": "I"
+          },
+          "pid_p": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "pid_i": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "pid_d": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "set_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "current_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "ref_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "feedback": {
+            "direction": "O",
+            "left": "16",
+            "right": "0"
+          }
+        }
+      },
+      "laser_controller_wra_2": {
+        "vlnv": "xilinx.com:module_ref:laser_controller_wrapper:1.0",
+        "xci_name": "design_1_laser_controller_wra_0_2",
+        "xci_path": "ip/design_1_laser_controller_wra_0_2/design_1_laser_controller_wra_0_2.xci",
+        "inst_hier_path": "laser_controller_wra_2",
+        "reference_info": {
+          "ref_type": "unknown",
+          "ref_name": "laser_controller_wrapper",
+          "boundary_crc": "0x0"
+        },
+        "ports": {
+          "ramp_start": {
+            "direction": "I"
+          },
+          "laser_id": {
+            "direction": "I",
+            "left": "3",
+            "right": "0"
+          },
+          "laser_exists": {
+            "direction": "I"
+          },
+          "laser_locked": {
+            "direction": "I"
+          },
+          "pid_p": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "pid_i": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "pid_d": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "set_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "current_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "ref_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "feedback": {
+            "direction": "O",
+            "left": "16",
+            "right": "0"
+          }
+        }
+      },
+      "laser_controller_wra_3": {
+        "vlnv": "xilinx.com:module_ref:laser_controller_wrapper:1.0",
+        "xci_name": "design_1_laser_controller_wra_2_0",
+        "xci_path": "ip/design_1_laser_controller_wra_2_0/design_1_laser_controller_wra_2_0.xci",
+        "inst_hier_path": "laser_controller_wra_3",
+        "reference_info": {
+          "ref_type": "unknown",
+          "ref_name": "laser_controller_wrapper",
+          "boundary_crc": "0x0"
+        },
+        "ports": {
+          "ramp_start": {
+            "direction": "I"
+          },
+          "laser_id": {
+            "direction": "I",
+            "left": "3",
+            "right": "0"
+          },
+          "laser_exists": {
+            "direction": "I"
+          },
+          "laser_locked": {
+            "direction": "I"
+          },
+          "pid_p": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "pid_i": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "pid_d": {
+            "direction": "I",
+            "left": "31",
+            "right": "0"
+          },
+          "set_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "current_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "ref_wavelength": {
+            "direction": "I",
+            "left": "15",
+            "right": "0"
+          },
+          "feedback": {
+            "direction": "O",
+            "left": "16",
+            "right": "0"
+          }
+        }
       }
     },
     "interface_nets": {
@@ -3976,6 +4337,12 @@
         "interface_ports": [
           "axi_registers_0/S00_AXI",
           "axi_interconnect_0/M01_AXI"
+        ]
+      },
+      "axi_interconnect_0_M02_AXI": {
+        "interface_ports": [
+          "axi_interconnect_0/M02_AXI",
+          "axi_config_registers_0/S00_AXI"
         ]
       },
       "clk_100mhz_1": {
@@ -4001,7 +4368,8 @@
       "adc_frontend_wrapper_0_adc_sample_unsigned": {
         "ports": [
           "adc_frontend_wrapper_0/adc_sample_unsigned",
-          "axi_registers_0/adc_debug"
+          "axi_registers_0/adc_debug",
+          "axi_config_registers_0/ref_detected_wavelength"
         ]
       },
       "adc_frontend_wrapper_0_adc_sck": {
@@ -4016,20 +4384,77 @@
           "adc_frontend_wrapper_0/adc_miso"
         ]
       },
+      "axi_config_registers_0_l1_exists": {
+        "ports": [
+          "axi_config_registers_0/l1_exists",
+          "laser_controller_wra_0/laser_exists"
+        ]
+      },
+      "axi_config_registers_0_l1_id": {
+        "ports": [
+          "axi_config_registers_0/l1_id",
+          "laser_controller_wra_0/laser_id"
+        ]
+      },
+      "axi_config_registers_0_l1_locked": {
+        "ports": [
+          "axi_config_registers_0/l1_locked",
+          "laser_controller_wra_0/laser_locked"
+        ]
+      },
+      "axi_config_registers_0_l1_pid_d": {
+        "ports": [
+          "axi_config_registers_0/l1_pid_d",
+          "laser_controller_wra_0/pid_d"
+        ]
+      },
+      "axi_config_registers_0_l1_pid_i": {
+        "ports": [
+          "axi_config_registers_0/l1_pid_i",
+          "laser_controller_wra_0/pid_i"
+        ]
+      },
+      "axi_config_registers_0_l1_pid_p": {
+        "ports": [
+          "axi_config_registers_0/l1_pid_p",
+          "laser_controller_wra_0/pid_p"
+        ]
+      },
+      "axi_config_registers_0_l1_set_wavelength": {
+        "ports": [
+          "axi_config_registers_0/l1_set_wavelength",
+          "laser_controller_wra_0/set_wavelength"
+        ]
+      },
+      "axi_config_registers_0_ref_set_wavelength": {
+        "ports": [
+          "axi_config_registers_0/ref_set_wavelength",
+          "laser_controller_wra_0/ref_wavelength",
+          "laser_controller_wra_1/ref_wavelength",
+          "laser_controller_wra_2/ref_wavelength",
+          "laser_controller_wra_3/ref_wavelength"
+        ]
+      },
       "clk_wiz_0_clk_out1": {
         "ports": [
           "clk_wiz_0/clk_out1",
           "global_timing_sequen_0/clk",
           "proc_sys_reset_1/slowest_sync_clk",
-          "ramp_dac_spi_wrapper_0/clk",
-          "adc_frontend_wrapper_0/clk"
+          "adc_frontend_wrapper_0/clk",
+          "ramp_dac_spi_wrapper_0/clk"
         ]
       },
       "global_timing_sequen_0_frame_tick": {
         "ports": [
           "global_timing_sequen_0/frame_tick",
-          "ramp_dac_spi_wrapper_0/frame_tick",
-          "adc_frontend_wrapper_0/frame_tick"
+          "adc_frontend_wrapper_0/frame_tick",
+          "ramp_dac_spi_wrapper_0/frame_tick"
+        ]
+      },
+      "peak_detection_wrapp_0_l1_position": {
+        "ports": [
+          "peak_detection_wrapp_0/l1_position",
+          "laser_controller_wra_0/current_wavelength"
         ]
       },
       "proc_sys_reset_0_peripheral_aresetn": {
@@ -4040,15 +4465,17 @@
           "axi_gpio_0/s_axi_aresetn",
           "axi_interconnect_0/M00_ARESETN",
           "axi_interconnect_0/M01_ARESETN",
-          "axi_registers_0/s00_axi_aresetn"
+          "axi_registers_0/s00_axi_aresetn",
+          "axi_interconnect_0/M02_ARESETN",
+          "axi_config_registers_0/s00_axi_aresetn"
         ]
       },
       "proc_sys_reset_1_mb_reset": {
         "ports": [
           "proc_sys_reset_1/mb_reset",
           "global_timing_sequen_0/reset",
-          "ramp_dac_spi_wrapper_0/reset",
-          "adc_frontend_wrapper_0/reset"
+          "adc_frontend_wrapper_0/reset",
+          "ramp_dac_spi_wrapper_0/reset"
         ]
       },
       "ramp_dac_spi_wrapper_0_ramp_dac_cs_n": {
@@ -4089,7 +4516,7 @@
       },
       "ramp_step1_dout": {
         "ports": [
-          "ramp_step1/dout",
+          "triangle_mode/dout",
           "ramp_dac_spi_wrapper_0/triangle_mode"
         ]
       },
@@ -4103,8 +4530,8 @@
         "ports": [
           "spi_enable/dout",
           "global_timing_sequen_0/enable",
-          "ramp_dac_spi_wrapper_0/enable",
-          "adc_frontend_wrapper_0/enable"
+          "adc_frontend_wrapper_0/enable",
+          "ramp_dac_spi_wrapper_0/enable"
         ]
       },
       "zynq_ultra_ps_e_0_pl_clk0": {
@@ -4117,7 +4544,9 @@
           "axi_gpio_0/s_axi_aclk",
           "axi_interconnect_0/M00_ACLK",
           "axi_interconnect_0/M01_ACLK",
-          "axi_registers_0/s00_axi_aclk"
+          "axi_registers_0/s00_axi_aclk",
+          "axi_interconnect_0/M02_ACLK",
+          "axi_config_registers_0/s00_axi_aclk"
         ]
       },
       "zynq_ultra_ps_e_0_pl_resetn0": {
@@ -4133,6 +4562,13 @@
         "address_spaces": {
           "Data": {
             "segments": {
+              "SEG_axi_config_registers_0_S00_AXI_reg": {
+                "address_block": "/axi_config_registers_0/S00_AXI/S00_AXI_reg",
+                "offset": "0x0080020000",
+                "range": "64K",
+                "offset_base_param": "C_S00_AXI_BASEADDR",
+                "offset_high_param": "C_S00_AXI_HIGHADDR"
+              },
               "SEG_axi_gpio_0_Reg": {
                 "address_block": "/axi_gpio_0/S_AXI/Reg",
                 "offset": "0x0080000000",
