@@ -3,7 +3,6 @@
 **Institution:** Tufts University, School of Engineering  
 **Sponsors:** Professor Mark Hempstead (Tufts) & University of Sydney Quantum Science Group
 
----
 ## 1. Project Overview
 This repository contains the design and implementation of a high-speed feedback control system on an FPGA, specifically engineered to stabilize lasers used in trapped ion quantum computers.
 
@@ -13,22 +12,19 @@ In quantum computing, laser frequency and intensity stability are critical. Even
 ### Our Solution
 **Blast Off Bronze** utilizes the custom hardware of FPGAs to provide an ultra-low-latency method for laser frequency locking. This system is designed to meet the rigorous specifications provided by the University of Sydney’s Quantum Science Group.
 
----
 ## 2. Hardware Setup and Documentation
 
----
 ## 3. Getting Started
 
 ### Prerequisites
 
 ### Installation
----
+
+
 ## 4. Repository Structure
 
----
 ## 5. Usage
 
----
 ## 6. Team
 + Eric Rohloff
 + Abe Nelson
