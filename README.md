@@ -1,7 +1,7 @@
 # EE98: Laser Stabilization for Trapped Ion Quantum Computing
 **Team Name:** Blast Off Bronze  
 **Institution:** Tufts University, School of Engineering  
-**Sponsors:** Professor Mark Hempstead (Tufts) & University of Sydney Quantum Control Laboratory Group
+**Sponsors:** Professor Mark Hempstead (Tufts) & University of Sydney Quantum Science Group
 
 ---
 ## 1. Project Overview
