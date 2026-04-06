@@ -1,0 +1,9 @@
+# Example command list for pynq_controller.py --commands-file
+# One command per line.
+
+create_laser laser_id=1 pid_param1=100 pid_param2=10 pid_param3=1
+lock_laser laser_id=1 pid_param1=1500 pid_param2=20 pid_param3=3 duration=15
+start_cavity duration=20 laser_id=1
+stop_cavity
+unlock_laser laser_id=1
+remove_laser laser_id=1
