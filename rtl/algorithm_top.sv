@@ -92,7 +92,7 @@ module algorithm_top (
         .ramp_dac_cs_n(dac_cs),
         .ramp_dac_sck(dac_sck),
         .ramp_dac_mosi(dac_mosi),
-        .ramp_dac_ldac_n(dac_ldac_n)
+        .ramp_dac_ldac_n(dac_ldac_n),
         .ramp_done(ramp_done)
     );
 
