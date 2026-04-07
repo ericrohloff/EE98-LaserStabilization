@@ -60,7 +60,13 @@ module algorithm_top (
 	output wire dac_mosi,
 	output wire dac_sck,
 	output wire dac_cs,
-	output wire dac_ldac_n
+	output wire dac_ldac_n,
+
+    // Ramp DAC
+	output wire feedback_dac_mosi,
+	output wire feedback_dac_sck,
+	output wire feedback_dac_cs
+
 );
 
     logic [6:0] seq_frame_tick;
@@ -103,6 +109,11 @@ module algorithm_top (
     logic [15:0] l3_peak_position;
     logic [15:0] l4_peak_position;
 
+    logic [15:0] l1_feedback;
+    logic [15:0] l2_feedback;
+    logic [15:0] l3_feedback;
+    logic [15:0] l4_feedback;
+
 	peak_detection u_peak_detection (
         .adc_sample(adc_sample_unsigned),
         .ramp_start(), // TODO
@@ -126,7 +137,8 @@ module algorithm_top (
         .pid_d(l1_pid_d),
         .set_wavelength(l1_set_wavelength),
         .current_wavelength(l1_peak_position),
-        .ref_wavelength(ref_set_wavelength)
+        .ref_wavelength(ref_set_wavelength),
+        .feedback(l1_feedback)
     );
 	laser_controller u_l2_controller (
         .laser_id(l2_id),
@@ -137,7 +149,8 @@ module algorithm_top (
         .pid_d(l2_pid_d),
         .set_wavelength(l2_set_wavelength),
         .current_wavelength(l2_peak_position),
-        .ref_wavelength(ref_set_wavelength)
+        .ref_wavelength(ref_set_wavelength),
+        .feedback(l2_feedback)
     );
 	laser_controller u_l3_controller (
         .laser_id(l3_id),
@@ -148,7 +161,8 @@ module algorithm_top (
         .pid_d(l3_pid_d),
         .set_wavelength(l3_set_wavelength),
         .current_wavelength(l3_peak_position),
-        .ref_wavelength(ref_set_wavelength)
+        .ref_wavelength(ref_set_wavelength),
+        .feedback(l3_feedback)
     );
 	laser_controller u_l4_controller (
         .laser_id(l4_id),
@@ -159,7 +173,27 @@ module algorithm_top (
         .pid_d(l4_pid_d),
         .set_wavelength(l4_set_wavelength),
         .current_wavelength(l4_peak_position),
-        .ref_wavelength(ref_set_wavelength)
+        .ref_wavelength(ref_set_wavelength),
+        .feedback(l4_feedback)
+    );
+
+    feedback_dac_driver u_feedback_dac (
+        .clk(clk),
+        .enable(enable),
+        .reset(reset),
+        .update_trigger(),
+        .l1_feedback_value(l1_feedback),
+        .l1_feedback_enable(1),
+        .l2_feedback_value(l2_feedback),
+        .l2_feedback_enable(1),
+        .l3_feedback_value(l3_feedback),
+        .l3_feedback_enable(1),
+        .l4_feedback_value(l4_feedback),
+        .l4_feedback_enable(1),
+
+        .dac_cs(feedback_dac_cs),
+        .dac_mosi(feedback_dac_mosi),
+        .dac_sck(feedback_dac_sck)
     );
 
 endmodule
