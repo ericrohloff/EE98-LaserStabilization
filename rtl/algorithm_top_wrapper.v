@@ -60,7 +60,11 @@ module algorithm_top_wrapper (
 	output wire dac_mosi,
 	output wire dac_sck,
 	output wire dac_cs,
-	output wire dac_ldac_n
+	output wire dac_ldac_n,
+
+	output wire feedback_dac_mosi,
+	output wire feedback_dac_sck,
+	output wire feedback_dac_cs
 );
 
 algorithm_top u_algorithm_top (
@@ -125,7 +129,12 @@ algorithm_top u_algorithm_top (
     .dac_mosi(dac_mosi),
     .dac_sck(dac_sck),
     .dac_cs(dac_cs),
-	.dac_ldac_n(dac_ldac_n)
+	.dac_ldac_n(dac_ldac_n),
+    
+    .feedback_dac_mosi(dac_mosi),
+    .feedback_dac_sck(dac_sck),
+    .feedback_dac_cs(dac_cs)
+
 );
 
 endmodule
