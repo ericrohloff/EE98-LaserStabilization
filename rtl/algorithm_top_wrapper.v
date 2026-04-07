@@ -133,7 +133,7 @@ algorithm_top u_algorithm_top (
     
     .feedback_dac_mosi(dac_mosi),
     .feedback_dac_sck(dac_sck),
-    .feedback_dac_cs(dac_cs)
+    .feedback_dac_cs(feedback_dac_cs)
 
 );
 
