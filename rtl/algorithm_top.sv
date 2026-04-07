@@ -78,6 +78,8 @@ module algorithm_top (
         .frame_tick(seq_frame_tick)
     );
 
+    logic ramp_done;
+
 	ramp_dac_spi u_ramp_dac_spi (
         .clk(clk),
         .reset(reset),
@@ -91,6 +93,7 @@ module algorithm_top (
         .ramp_dac_sck(dac_sck),
         .ramp_dac_mosi(dac_mosi),
         .ramp_dac_ldac_n(dac_ldac_n)
+        .ramp_done(ramp_done)
     );
 
 	adc_frontend u_adc_frontend (
@@ -181,7 +184,7 @@ module algorithm_top (
         .clk(clk),
         .enable(enable),
         .reset(reset),
-        .update_trigger(),
+        .update_trigger(ramp_done),
         .l1_feedback_value(l1_feedback),
         .l1_feedback_enable(1),
         .l2_feedback_value(l2_feedback),
