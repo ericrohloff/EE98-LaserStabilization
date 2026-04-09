@@ -20,6 +20,7 @@ module feedback_dac_driver (
 
 localparam [1:0] DAC_SINGLE_UPDATE = 2'b01;
 localparam integer CLKS_PER_HALF_BIT = 5;  // 100MHz -> 10MHz SCK
+localparam integer LOAD_WAIT_CLKS = (4 * CLKS_PER_HALF_BIT);  // 2 full dac_sck cycles
 
 localparam [1:0] CH_L1 = 2'b00;
 localparam [1:0] CH_L2 = 2'b01;
@@ -48,6 +49,8 @@ reg [23:0] shift_reg;
 reg [2:0] clk_div_count;
 reg [4:0] bits_sent;
 reg last_bit_sampled;
+reg [5:0] load_wait_count;
+reg load_prepared;
 
 reg dac_cs_r;
 reg dac_sck_r;
@@ -72,6 +75,8 @@ always @(posedge clk or posedge reset) begin
         clk_div_count <= 3'd0;
         bits_sent <= 5'd0;
         last_bit_sampled <= 1'b0;
+        load_wait_count <= 6'd0;
+        load_prepared <= 1'b0;
         dac_cs_r <= 1'b1;
         dac_sck_r <= 1'b0;
         dac_mosi_r <= 1'b0;
@@ -84,6 +89,8 @@ always @(posedge clk or posedge reset) begin
                 clk_div_count <= 3'd0;
                 bits_sent <= 5'd0;
                 last_bit_sampled <= 1'b0;
+                load_wait_count <= 6'd0;
+                load_prepared <= 1'b0;
 
                 if (enable && update_trigger) begin
                     // Latch values and channel enables once per trigger edge.
@@ -111,40 +118,47 @@ always @(posedge clk or posedge reset) begin
                 bits_sent <= 5'd0;
                 last_bit_sampled <= 1'b0;
 
-                if (pending_mask[0]) begin
-                    active_channel <= CH_L1;
-                    addr_byte <= {2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L1, 1'b0};
-                    shift_reg <= {{2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L1, 1'b0}, value_l1_lat};
-                    dac_mosi_r <= 1'b0;
-                    pending_mask[0] <= 1'b0;
-                    state <= ST_SHIFT;
-                    dac_cs_r <= 1'b0;
-                end else if (pending_mask[1]) begin
-                    active_channel <= CH_L2;
-                    addr_byte <= {2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L2, 1'b0};
-                    shift_reg <= {{2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L2, 1'b0}, value_l2_lat};
-                    dac_mosi_r <= 1'b0;
-                    pending_mask[1] <= 1'b0;
-                    state <= ST_SHIFT;
-                    dac_cs_r <= 1'b0;
-                end else if (pending_mask[2]) begin
-                    active_channel <= CH_L3;
-                    addr_byte <= {2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L3, 1'b0};
-                    shift_reg <= {{2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L3, 1'b0}, value_l3_lat};
-                    dac_mosi_r <= 1'b0;
-                    pending_mask[2] <= 1'b0;
-                    state <= ST_SHIFT;
-                    dac_cs_r <= 1'b0;
-                end else if (pending_mask[3]) begin
-                    active_channel <= CH_L4;
-                    addr_byte <= {2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L4, 1'b0};
-                    shift_reg <= {{2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L4, 1'b0}, value_l4_lat};
-                    dac_mosi_r <= 1'b0;
-                    pending_mask[3] <= 1'b0;
+                if (!load_prepared) begin
+                    load_wait_count <= 6'd0;
+
+                    if (pending_mask[0]) begin
+                        active_channel <= CH_L1;
+                        addr_byte <= {2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L1, 1'b0};
+                        shift_reg <= {{2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L1, 1'b0}, value_l1_lat};
+                        dac_mosi_r <= 1'b0;
+                        pending_mask[0] <= 1'b0;
+                        load_prepared <= 1'b1;
+                    end else if (pending_mask[1]) begin
+                        active_channel <= CH_L2;
+                        addr_byte <= {2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L2, 1'b0};
+                        shift_reg <= {{2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L2, 1'b0}, value_l2_lat};
+                        dac_mosi_r <= 1'b0;
+                        pending_mask[1] <= 1'b0;
+                        load_prepared <= 1'b1;
+                    end else if (pending_mask[2]) begin
+                        active_channel <= CH_L3;
+                        addr_byte <= {2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L3, 1'b0};
+                        shift_reg <= {{2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L3, 1'b0}, value_l3_lat};
+                        dac_mosi_r <= 1'b0;
+                        pending_mask[2] <= 1'b0;
+                        load_prepared <= 1'b1;
+                    end else if (pending_mask[3]) begin
+                        active_channel <= CH_L4;
+                        addr_byte <= {2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L4, 1'b0};
+                        shift_reg <= {{2'b00, DAC_SINGLE_UPDATE, 1'b0, CH_L4, 1'b0}, value_l4_lat};
+                        dac_mosi_r <= 1'b0;
+                        pending_mask[3] <= 1'b0;
+                        load_prepared <= 1'b1;
+                    end else begin
+                        state <= ST_IDLE;
+                    end
+                end else if (load_wait_count == (LOAD_WAIT_CLKS - 1)) begin
+                    load_wait_count <= 6'd0;
+                    load_prepared <= 1'b0;
                     state <= ST_SHIFT;
                     dac_cs_r <= 1'b0;
                 end else begin
-                    state <= ST_IDLE;
+                    load_wait_count <= load_wait_count + 6'd1;
                 end
             end
 
