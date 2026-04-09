@@ -32,7 +32,6 @@ localparam [1:0] ST_SHIFT = 2'd2;
 
 reg [1:0] state;
 
-reg trigger_d;
 wire trigger_rise;
 
 reg [15:0] value_l1_lat;
@@ -58,12 +57,10 @@ assign dac_cs = dac_cs_r;
 assign dac_sck = dac_sck_r;
 assign dac_mosi = dac_mosi_r;
 
-assign trigger_rise = update_trigger & ~trigger_d;
 
 always @(posedge clk or posedge reset) begin
     if (reset) begin
         state <= ST_IDLE;
-        trigger_d <= 1'b0;
         value_l1_lat <= 16'd0;
         value_l2_lat <= 16'd0;
         value_l3_lat <= 16'd0;
@@ -79,7 +76,6 @@ always @(posedge clk or posedge reset) begin
         dac_sck_r <= 1'b0;
         dac_mosi_r <= 1'b0;
     end else begin
-        trigger_d <= update_trigger;
 
         case (state)
             ST_IDLE: begin
@@ -89,7 +85,7 @@ always @(posedge clk or posedge reset) begin
                 bits_sent <= 5'd0;
                 last_bit_sampled <= 1'b0;
 
-                if (enable && trigger_rise) begin
+                if (enable && update_trigger) begin
                     // Latch values and channel enables once per trigger edge.
                     value_l1_lat <= l1_feedback_value;
                     value_l2_lat <= l2_feedback_value;
