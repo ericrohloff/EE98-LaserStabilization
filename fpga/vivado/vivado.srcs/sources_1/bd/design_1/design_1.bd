@@ -1,7 +1,7 @@
 {
   "design": {
     "design_info": {
-      "boundary_crc": "0x1072370B2C9DA408",
+      "boundary_crc": "0x1F301BFECBCAB7D4",
       "device": "xczu3eg-sfvc784-2-e",
       "gen_directory": "../../../../vivado.gen/sources_1/bd/design_1",
       "name": "design_1",
@@ -118,6 +118,36 @@
         }
       },
       "adc_sck": {
+        "type": "data",
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
+      },
+      "feedback_dac_mosi": {
+        "type": "data",
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
+      },
+      "feedback_dac_sck": {
+        "type": "data",
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
+      },
+      "feedback_dac_cs": {
         "type": "data",
         "direction": "O",
         "parameters": {
@@ -4087,6 +4117,15 @@
           },
           "dac_ldac_n": {
             "direction": "O"
+          },
+          "feedback_dac_mosi": {
+            "direction": "O"
+          },
+          "feedback_dac_sck": {
+            "direction": "O"
+          },
+          "feedback_dac_cs": {
+            "direction": "O"
           }
         }
       }
@@ -4177,6 +4216,24 @@
         "ports": [
           "algorithm_top_wrapper_0/dac_sck",
           "clk_output"
+        ]
+      },
+      "algorithm_top_wrapper_0_feedback_dac_cs": {
+        "ports": [
+          "algorithm_top_wrapper_0/feedback_dac_cs",
+          "feedback_dac_cs"
+        ]
+      },
+      "algorithm_top_wrapper_0_feedback_dac_mosi": {
+        "ports": [
+          "algorithm_top_wrapper_0/feedback_dac_mosi",
+          "feedback_dac_mosi"
+        ]
+      },
+      "algorithm_top_wrapper_0_feedback_dac_sck": {
+        "ports": [
+          "algorithm_top_wrapper_0/feedback_dac_sck",
+          "feedback_dac_sck"
         ]
       },
       "axi_config_registers_0_l1_exists": {

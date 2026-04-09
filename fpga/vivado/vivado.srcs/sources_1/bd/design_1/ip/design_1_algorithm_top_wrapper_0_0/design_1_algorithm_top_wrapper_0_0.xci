@@ -109,7 +109,10 @@
                   &quot;dac_mosi&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
                   &quot;dac_sck&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
                   &quot;dac_cs&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
-                  &quot;dac_ldac_n&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ]
+                  &quot;dac_ldac_n&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;feedback_dac_mosi&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;feedback_dac_sck&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;feedback_dac_cs&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ]
                 },
                 &quot;interfaces&quot;: {
                   &quot;reset&quot;: {

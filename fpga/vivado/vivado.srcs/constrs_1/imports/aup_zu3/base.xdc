@@ -165,11 +165,14 @@ set_property PACKAGE_PIN AH12 [get_ports {iop_rpi0[10]}]
 set_property PACKAGE_PIN AH10 [get_ports {iop_rpi0[11]}]
 set_property PACKAGE_PIN AD10 [get_ports {iop_rpi0[12]}]
 set_property PACKAGE_PIN AA11 [get_ports {iop_rpi0[13]}]
-set_property PACKAGE_PIN AE15 [get_ports {iop_rpi0[14]}]
-set_property PACKAGE_PIN AF13 [get_ports {iop_rpi0[15]}]
+#set_property PACKAGE_PIN AE15 [get_ports {iop_rpi0[14]}]
+set_property PACKAGE_PIN AE15 [get_ports {feedback_dac_mosi}]
+#set_property PACKAGE_PIN AF13 [get_ports {iop_rpi0[15]}]
+set_property PACKAGE_PIN AF13 [get_ports {feedback_dac_sck}]
 set_property PACKAGE_PIN AB10 [get_ports {iop_rpi0[16]}]
 set_property PACKAGE_PIN AG14 [get_ports {iop_rpi0[17]}]
-set_property PACKAGE_PIN AC11 [get_ports {iop_rpi0[18]}]
+#set_property PACKAGE_PIN AC11 [get_ports {iop_rpi0[18]}]
+set_property PACKAGE_PIN AC11 [get_ports {feedback_dac_cs}]
 set_property PACKAGE_PIN AB9 [get_ports {iop_rpi0[19]}]
 set_property PACKAGE_PIN AA10 [get_ports {iop_rpi0[20]}]
 set_property PACKAGE_PIN Y9 [get_ports {iop_rpi0[21]}]
@@ -192,6 +195,9 @@ set_property IOSTANDARD LVCMOS33 [get_ports {dac_mosi}];
 set_property IOSTANDARD LVCMOS33 [get_ports {adc_sck}]; 
 set_property IOSTANDARD LVCMOS33 [get_ports {adc_miso}]; 
 set_property IOSTANDARD LVCMOS33 [get_ports {adc_cnv}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {feedback_dac_mosi}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {feedback_dac_sck}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {feedback_dac_cs}]; 
 
 set_property SLEW FAST [get_ports {clk_output}]; 
 set_property DRIVE 16 [get_ports {clk_output}];
