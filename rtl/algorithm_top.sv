@@ -89,6 +89,7 @@ module algorithm_top (
     );
 
     logic ramp_done;
+    assign debug_pin_0 = ramp_done;
 
 	ramp_dac_spi u_ramp_dac_spi (
         .clk(clk),

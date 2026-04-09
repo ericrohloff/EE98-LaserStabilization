@@ -67,14 +67,14 @@ module algorithm_top_wrapper (
 	output wire feedback_dac_cs,
 
 
-    output wire debug_pin_0;
-    output wire debug_pin_1;
-    output wire debug_pin_2;
-    output wire debug_pin_3;
-    output wire debug_pin_4;
-    output wire debug_pin_5;
-    output wire debug_pin_6;
-    output wire debug_pin_7;
+    output wire debug_pin_0,
+    output wire debug_pin_1,
+    output wire debug_pin_2,
+    output wire debug_pin_3,
+    output wire debug_pin_4,
+    output wire debug_pin_5,
+    output wire debug_pin_6,
+    output wire debug_pin_7
 );
 
 algorithm_top u_algorithm_top (
