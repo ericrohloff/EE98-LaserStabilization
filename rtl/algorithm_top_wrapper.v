@@ -64,7 +64,17 @@ module algorithm_top_wrapper (
 
 	output wire feedback_dac_mosi,
 	output wire feedback_dac_sck,
-	output wire feedback_dac_cs
+	output wire feedback_dac_cs,
+
+
+    output wire debug_pin_0;
+    output wire debug_pin_1;
+    output wire debug_pin_2;
+    output wire debug_pin_3;
+    output wire debug_pin_4;
+    output wire debug_pin_5;
+    output wire debug_pin_6;
+    output wire debug_pin_7;
 );
 
 algorithm_top u_algorithm_top (
@@ -133,7 +143,17 @@ algorithm_top u_algorithm_top (
     
     .feedback_dac_mosi(feedback_dac_mosi),
     .feedback_dac_sck(feedback_dac_sck),
-    .feedback_dac_cs(feedback_dac_cs)
+    .feedback_dac_cs(feedback_dac_cs),
+
+    .debug_pin_0(debug_pin_0),
+    .debug_pin_1(debug_pin_1),
+    .debug_pin_2(debug_pin_2),
+    .debug_pin_3(debug_pin_3),
+    .debug_pin_4(debug_pin_4),
+    .debug_pin_5(debug_pin_5),
+    .debug_pin_6(debug_pin_6),
+    .debug_pin_7(debug_pin_7)
+
 
 );
 
