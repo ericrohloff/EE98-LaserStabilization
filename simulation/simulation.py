@@ -10,7 +10,7 @@ from controllers import PID
 
 
 class Simulation:
-    def __init__(self, duration=2.0, dt=0.01, data_filepath=None, ref_wavelength=650, laser_a_start=625, laser_a_target=625, laser_b_start=675, laser_b_target=675):
+    def __init__(self, duration=2.0, dt=0.01, data_filepath=None, ref_wavelength=650, starts=None, targets=None):
         self.duration = duration
         self.dt = dt  # Time step (represents one scan cycle)
         self.steps = int(duration / dt)
@@ -20,31 +20,43 @@ class Simulation:
         # Setup Simulation Objects
         # Range covers the laser wavelengths
         self.cavity = Cavity(600, 700)
-        self.reference_laser = Laser("Ref", ref_wavelength)
+        self.reference_laser = Laser("Ref", ref_wavelength, ref_wavelength)
         self.reference_laser.drift_enabled = False
-        self.laser_a = Laser("A", laser_a_start)
-        self.laser_b = Laser("B", laser_b_start)
-        self.laser_a.target_wavelength = laser_a_target
-        self.laser_b.target_wavelength = laser_b_target
-        self.laser_a.drift_enabled = True
-        self.laser_b.drift_enabled = True
-        self.lasers = [self.reference_laser, self.laser_a, self.laser_b]
-        self.controlled_lasers = [self.laser_a, self.laser_b]
+
+        if starts is None:
+            starts = [625.0, 675.0]
+        if targets is None:
+            targets = [625.0, 675.0]
+
+        if len(starts) != len(targets):
+            raise ValueError("controlled_starts and controlled_targets must have the same length")
+
+        if not (1 <= len(starts) <= 4):
+            raise ValueError("Number of controllable lasers must be between 1 and 4")
+
+        # Integral Controller
+        # Kp=0, Ki=5.0, Kd=0 (Tune Ki for performance)
+        # Limits +/- 10V
+        # Setpoint is the target wavelength (e.g., 650.0 nm)
+        self.controllers = {}
+
+        self.controlled_lasers = []
+
+        for i, (start, target) in enumerate(zip(starts, targets), start=1):
+            laser_id = f"L{i}"
+            laser = Laser(laser_id, start, target)
+            laser.drift_enabled = True
+
+            self.controlled_lasers.append(laser)
+            self.controllers[laser_id] = PID(Kp=0.0,Ki=5.0,Kd=0.0,
+                setpoint=target, output_limits=(-10.0, 10.0))
+
+        self.lasers = self.controlled_lasers + [self.reference_laser]
 
         for laser in self.lasers:
             self.cavity.add_laser(laser)
 
         self.detector = SimpleThresholdDetector(threshold=0.02)
-
-        # Integral Controller
-
-        # Kp=0, Ki=5.0, Kd=0 (Tune Ki for performance)
-        # Limits +/- 10V
-        # Setpoint is the target wavelength (e.g., 650.0 nm)
-        self.pid_a = PID(Kp=0, Ki=5.0, Kd=0.0,
-                         setpoint=laser_a_target, output_limits=(-10.0, 10.0))
-        self.pid_b = PID(Kp=0, Ki=5.0, Kd=0.0,
-                         setpoint=laser_b_target, output_limits=(-10.0, 10.0))
 
         # Data storage
         self.time_data = []
@@ -211,37 +223,29 @@ class Simulation:
             return scan_output, scan_range
         
     def assign_peaks(self, detected_peaks):
-        assignments = {"Ref": None, "A": None, "B": None}
+        laser_ids = [laser.id for laser in self.lasers]
+        expected = {laser.id: laser.freq for laser in self.lasers}
+        assignments = {laser_id: None for laser_id in laser_ids}
 
-        expected = {
-            "Ref": self.reference_laser.freq,
-            "A": self.laser_a.freq,
-            "B": self.laser_b.freq,
-        }
+        remaining_peaks = list(detected_peaks)
 
-        names = ["Ref", "A", "B"]
-        best_cost = float("inf")
-        best_assignment = assignments.copy()
+        # Assign in order of expected wavelength so nearby lasers don't fight as much
+        ordered_ids = sorted(laser_ids, key=lambda lid: expected[lid])
 
-        # try assignments using up to 3 detected peaks
-        for chosen_peaks in itertools.permutations(detected_peaks, min(len(detected_peaks), 3)):
-            trial = {"Ref": None, "A": None, "B": None}
-            cost = 0.0
-            valid = True
+        assignment_window = 2.0
 
-            for name, peak in zip(names, chosen_peaks):
-                err = abs(peak - expected[name])
-                if err > 2.0:
-                    valid = False
-                    break
-                trial[name] = peak
-                cost += err
+        for laser_id in ordered_ids:
+            if not remaining_peaks:
+                break
 
-            if valid and cost < best_cost:
-                best_cost = cost
-                best_assignment = trial
+            best_peak = min(remaining_peaks, key=lambda p: abs(p - expected[laser_id]))
+            err = abs(best_peak - expected[laser_id])
 
-        return best_assignment
+            if err <= assignment_window:
+                assignments[laser_id] = best_peak
+                remaining_peaks.remove(best_peak)
+
+        return assignments
 
     def slew_limit(self, new_u, old_u, max_step=0.25):
         return max(min(new_u, old_u + max_step), old_u - max_step)
@@ -253,10 +257,16 @@ class Simulation:
 
         # Per-laser history containers
         self.history = {
-            "Ref": {"actual": [], "measured": []},
-            "A": {"actual": [], "measured": [], "error": [], "control": []},
-            "B": {"actual": [], "measured": [], "error": [], "control": []},
+            self.reference_laser.id: {"actual": [], "measured": []}
         }
+
+        for laser in self.controlled_lasers:
+            self.history[laser.id] = {
+                "actual": [],
+                "measured": [],
+                "error": [],
+                "control": [],
+            }
 
         for _ in range(self.steps):
             # 1) Advance all lasers' internal state.
@@ -269,7 +279,7 @@ class Simulation:
             # Laser jump from table bump or other disturbance
             if random.random() < 0.005:
                 for laser in self.lasers:
-                    laser.trigger_fast_jump(random.uniform(-10.0, 10.0), duration=0.8)
+                    laser.trigger_fast_jump(random.uniform(-10.0, 10.0), duration=0.2)
 
             # Laser being blocked/losing reading
             if random.random() < 0.005:
@@ -278,17 +288,12 @@ class Simulation:
                     laser.trigger_block(block_duration)
 
             # 3) Optional local disturbances on individual adjustable lasers
-            if random.random() < 0.0015:
-                self.laser_a.trigger_fast_jump(random.uniform(-0.8, 0.8), duration=0.01)
+            for laser in self.controlled_lasers:
+                if random.random() < 0.0015:
+                    laser.trigger_fast_jump(random.uniform(-0.8, 0.8), duration=0.01)
 
-            if random.random() < 0.0015:
-                self.laser_b.trigger_fast_jump(random.uniform(-0.8, 0.8), duration=0.01)
-
-            if random.random() < 0.0005:
-                self.laser_a.trigger_block(random.choice([0.01, 0.05]))
-
-            if random.random() < 0.0005:
-                self.laser_b.trigger_block(random.choice([0.01, 0.05]))
+                if random.random() < 0.0005:
+                    laser.trigger_block(random.choice([0.01, 0.05]))
 
             # 4) Perform one shared cavity scan
             scan_output, scan_range = self.perform_scan()
@@ -297,40 +302,40 @@ class Simulation:
             peaks = self.detector.detect_peaks(scan_output, scan_range)
             assignments = self.assign_peaks(peaks)
 
-            ref_meas = assignments["Ref"]
-            a_meas = assignments["A"]
-            b_meas = assignments["B"]
+            ref_meas = assignments.get(self.reference_laser.id)
 
-            # 6) Hold last valid measurement if a peak is missed
-            if ref_meas is None and self.history["Ref"]["measured"]:
-                ref_meas_for_log = self.history["Ref"]["measured"][-1]
+            measured_for_log = {}
+            measured_for_control = {}
+
+            for laser in self.controlled_lasers:
+                meas = assignments.get(laser.id)
+                measured_for_control[laser.id] = meas
+
+                if meas is None and self.history[laser.id]["measured"]:
+                    measured_for_log[laser.id] = self.history[laser.id]["measured"][-1]
+                else:
+                    measured_for_log[laser.id] = meas
+
+            if ref_meas is None and self.history[self.reference_laser.id]["measured"]:
+                ref_meas_for_log = self.history[self.reference_laser.id]["measured"][-1]
             else:
                 ref_meas_for_log = ref_meas
 
-            if a_meas is None and self.history["A"]["measured"]:
-                a_meas_for_log = self.history["A"]["measured"][-1]
-            else:
-                a_meas_for_log = a_meas
-
-            if b_meas is None and self.history["B"]["measured"]:
-                b_meas_for_log = self.history["B"]["measured"][-1]
-            else:
-                b_meas_for_log = b_meas
-
             # 7) Update control only when a valid peak was assigned
-            if a_meas is not None:
-                raw_a = self.pid_a.update(a_meas, self.dt)
-                control_a = self.slew_limit(raw_a, self.laser_a.control_voltage, max_step=0.25)
-                self.laser_a.control_voltage = control_a
-            else:
-                control_a = self.laser_a.control_voltage  # hold last output
+            control_values = {}
 
-            if b_meas is not None:
-                raw_b = self.pid_b.update(b_meas, self.dt)
-                control_b = self.slew_limit(raw_b, self.laser_b.control_voltage, max_step=0.25)
-                self.laser_b.control_voltage = control_b
-            else:
-                control_b = self.laser_b.control_voltage  # hold last output
+            for laser in self.controlled_lasers:
+                meas = measured_for_control[laser.id]
+                controller = self.controllers[laser.id]
+
+                if meas is not None:
+                    raw_u = controller.update(meas, self.dt)
+                    control_u = self.slew_limit(raw_u, laser.control_voltage, max_step=0.25)
+                    laser.control_voltage = control_u
+                else:
+                    control_u = laser.control_voltage
+
+                control_values[laser.id] = control_u
 
             # 8) Store diagnostics
             self.last_scan_data = {
@@ -343,35 +348,29 @@ class Simulation:
             # 9) Log histories
             self.time_data.append(current_time)
 
-            self.history["Ref"]["actual"].append(self.reference_laser.freq)
+            self.history[self.reference_laser.id]["actual"].append(self.reference_laser.freq)
+            self.history[self.reference_laser.id]["measured"].append(ref_meas_for_log)
 
-            self.history["A"]["actual"].append(self.laser_a.freq)
-            self.history["A"]["control"].append(control_a)
+            for laser in self.controlled_lasers:
+                controller = self.controllers[laser.id]
 
-            self.history["B"]["actual"].append(self.laser_b.freq)
-            self.history["B"]["control"].append(control_b)
+                self.history[laser.id]["actual"].append(laser.freq)
+                self.history[laser.id]["measured"].append(measured_for_log[laser.id])
+                self.history[laser.id]["control"].append(control_values[laser.id])
 
-            self.history["Ref"]["measured"].append(ref_meas_for_log)
-
-            self.history["A"]["measured"].append(a_meas_for_log)
-            if a_meas_for_log is not None:
-                self.history["A"]["error"].append(self.pid_a.setpoint - a_meas_for_log)
-            else:
-                self.history["A"]["error"].append(np.nan)
-
-            self.history["B"]["measured"].append(b_meas_for_log)
-            if b_meas_for_log is not None:
-                self.history["B"]["error"].append(self.pid_b.setpoint - b_meas_for_log)
-            else:
-                self.history["B"]["error"].append(np.nan)
+                if measured_for_log[laser.id] is not None:
+                    self.history[laser.id]["error"].append(
+                        controller.setpoint - measured_for_log[laser.id]
+                    )
+                else:
+                    self.history[laser.id]["error"].append(np.nan)
 
             current_time += self.dt
 
         print("Simulation complete.")
-        print(f"Final A error: {self.history['A']['error'][-1]:.6f} nm")
-        print(f"Final B error: {self.history['B']['error'][-1]:.6f} nm")
-        print(f"Final A control voltage: {self.history['A']['control'][-1]:.6f} V")
-        print(f"Final B control voltage: {self.history['B']['control'][-1]:.6f} V")
+        for laser in self.controlled_lasers:
+            print(f"Final {laser.id} error: {self.history[laser.id]['error'][-1]:.6f} nm")
+            print(f"Final {laser.id} control voltage: {self.history[laser.id]['control'][-1]:.6f} V")
 
     def plot_results(self):
         if not self.time_data or not hasattr(self, "history"):
@@ -380,112 +379,43 @@ class Simulation:
 
         fig, axes = plt.subplots(3, 1, figsize=(12, 10), sharex=True)
 
-        # -----------------------------
-        # 1) Actual wavelengths vs time
-        # -----------------------------
-        axes[0].plot(
-            self.time_data,
-            self.history["Ref"]["actual"],
-            label="Reference",
-            color="green",
-            linewidth=2,
-        )
-        axes[0].plot(
-            self.time_data,
-            self.history["A"]["actual"],
-            label="Laser A",
-            color="blue",
-            linewidth=2,
-        )
-        axes[0].plot(
-            self.time_data,
-            self.history["B"]["actual"],
-            label="Laser B",
-            color="orange",
-            linewidth=2,
-        )
-
-        # Optional measured traces
-        # axes[0].plot(
-        #     self.time_data,
-        #     self.history["Ref"]["measured"],
-        #     "--",
-        #     label="Reference Measured",
-        #     alpha=0.8,
-        # )
-        # axes[0].plot(
-        #     self.time_data,
-        #     self.history["A"]["measured"],
-        #     "--",
-        #     label="Laser A Measured",
-        #     alpha=0.8,
-        # )
-        # axes[0].plot(
-        #     self.time_data,
-        #     self.history["B"]["measured"],
-        #     "--",
-        #     label="Laser B Measured",
-        #     alpha=0.8,
-        # )
-
-        # # Target lines for controlled lasers
-        # axes[0].axhline(
-        #     self.laser_a.target_wavelength,
-        #     linestyle=":",
-        #     linewidth=2,
-        #     label=f"Laser A Target ({self.laser_a.target_wavelength:.3f} nm)",
-        # )
-        # axes[0].axhline(
-        #     self.laser_b.target_wavelength,
-        #     linestyle=":",
-        #     linewidth=2,
-        #     label=f"Laser B Target ({self.laser_b.target_wavelength:.3f} nm)",
-        # )
+        # Actual wavelengths
+        for laser in self.lasers:
+            axes[0].plot(
+                self.time_data,
+                self.history[laser.id]["actual"],
+                label=laser.id,
+                linewidth=2,
+            )
 
         axes[0].set_ylabel("Wavelength (nm)")
         axes[0].set_title("Laser Wavelengths vs Time")
         axes[0].grid(True)
         axes[0].legend(loc="best", ncol=2)
 
-        # -----------------------------
-        # 2) Error traces
-        # -----------------------------
-        axes[1].plot(
-            self.time_data,
-            self.history["A"]["error"],
-            label="Laser A Error",
-            linewidth=2,
-        )
-        axes[1].plot(
-            self.time_data,
-            self.history["B"]["error"],
-            label="Laser B Error",
-            linewidth=2,
-        )
+        # Errors
+        for laser in self.controlled_lasers:
+            axes[1].plot(
+                self.time_data,
+                self.history[laser.id]["error"],
+                label=f"{laser.id} Error",
+                linewidth=2,
+            )
         axes[1].axhline(0.0, linestyle="--", linewidth=1)
-
         axes[1].set_ylabel("Error (nm)")
         axes[1].set_title("Control Error (Target - Measured)")
         axes[1].grid(True)
         axes[1].legend(loc="best")
 
-        # -----------------------------
-        # 3) Control voltages
-        # -----------------------------
-        axes[2].plot(
-            self.time_data,
-            self.history["A"]["control"],
-            label="Laser A Control Voltage",
-            linewidth=2,
-        )
-        axes[2].plot(
-            self.time_data,
-            self.history["B"]["control"],
-            label="Laser B Control Voltage",
-            linewidth=2,
-        )
+        # Controls
+        for laser in self.controlled_lasers:
+            axes[2].plot(
+                self.time_data,
+                self.history[laser.id]["control"],
+                label=f"{laser.id} Applied Control Voltage",
+                linewidth=2,
+            )
         axes[2].axhline(0.0, linestyle="--", linewidth=1)
-
         axes[2].set_ylabel("Control Voltage (V)")
         axes[2].set_xlabel("Time (s)")
         axes[2].set_title("PID Outputs")
@@ -502,7 +432,7 @@ class Simulation:
         2) wavelength ramp vs time within the scan
         3) output vs time within the scan
 
-        Marks all detected peaks plus the assigned peaks for Ref, A, and B.
+        Marks assigned peaks for all lasers currently in the simulation.
         """
         if not self.last_scan_data:
             print("No scan data available to plot.")
@@ -510,8 +440,8 @@ class Simulation:
 
         scan_output = self.last_scan_data.get("scan_output", [])
         scan_range = self.last_scan_data.get("scan_range", [])
-        detected_peaks = self.last_scan_data.get("detected_peaks", [])
         assignments = self.last_scan_data.get("assignments", {})
+        detected_peaks = self.last_scan_data.get("detected_peaks", [])
 
         if len(scan_output) == 0 or len(scan_range) == 0:
             print("Last scan data is empty.")
@@ -521,12 +451,23 @@ class Simulation:
 
         fig, axes = plt.subplots(3, 1, figsize=(12, 10))
 
+        # Marker styles for variable number of lasers
+        markers = ["o", "s", "^", "D", "P", "X", "*", "v"]
+        laser_ids = [laser.id for laser in self.lasers]
+        assignment_styles = {
+            laser_id: {
+                "marker": markers[i % len(markers)],
+                "label": f"Assigned {laser_id} Peak",
+            }
+            for i, laser_id in enumerate(laser_ids)
+        }
+
         # --------------------------------------
         # 1) Cavity Output vs Wavelength
         # --------------------------------------
         axes[0].plot(scan_range, scan_output, label="Cavity Output", linewidth=2)
 
-        # Mark all detected peaks
+        # Optional: show all detected peaks too
         # detected_label_used = False
         # for peak_wl in detected_peaks:
         #     idx = np.abs(scan_range - peak_wl).argmin()
@@ -534,23 +475,21 @@ class Simulation:
         #         peak_wl,
         #         scan_output[idx],
         #         "rx",
-        #         markersize=8,
+        #         markersize=7,
         #         label="Detected Peak" if not detected_label_used else None,
         #     )
         #     detected_label_used = True
 
-        # Mark assignments
-        assignment_styles = {
-            "Ref": {"marker": "o", "label": "Assigned Ref Peak"},
-            "A": {"marker": "s", "label": "Assigned A Peak"},
-            "B": {"marker": "^", "label": "Assigned B Peak"},
-        }
-
-        for name, peak_wl in assignments.items():
+        # Assigned peaks
+        for laser_id, peak_wl in assignments.items():
             if peak_wl is None:
                 continue
+
             idx = np.abs(scan_range - peak_wl).argmin()
-            style = assignment_styles.get(name, {"marker": "o", "label": f"{name} Peak"})
+            style = assignment_styles.get(
+                laser_id, {"marker": "o", "label": f"Assigned {laser_id} Peak"}
+            )
+
             axes[0].plot(
                 peak_wl,
                 scan_output[idx],
@@ -581,49 +520,41 @@ class Simulation:
         # --------------------------------------
         axes[2].plot(scan_time, scan_output, label="PD Voltage", linewidth=2)
 
-        # detected_label_used = False
-        # for peak_wl in detected_peaks:
-        #     if (self.cavity.end_wv_nm - self.cavity.start_wv_nm) == 0:
-        #         continue
+        # Optional: show all detected peaks in time too
+        detected_label_used = False
+        span = self.cavity.end_wv_nm - self.cavity.start_wv_nm
+        if span != 0:
+            # for peak_wl in detected_peaks:
+            #     t_peak = ((peak_wl - self.cavity.start_wv_nm) / span) * self.dt
+            #     idx = np.abs(scan_range - peak_wl).argmin()
 
-        #     t_peak = (
-        #         (peak_wl - self.cavity.start_wv_nm)
-        #         / (self.cavity.end_wv_nm - self.cavity.start_wv_nm)
-        #         * self.dt
-        #     )
-        #     idx = np.abs(scan_range - peak_wl).argmin()
+            #     axes[2].plot(
+            #         t_peak,
+            #         scan_output[idx],
+            #         "rx",
+            #         markersize=7,
+            #         label="Detected Peak" if not detected_label_used else None,
+            #     )
+            #     detected_label_used = True
 
-        #     axes[2].plot(
-        #         t_peak,
-        #         scan_output[idx],
-        #         "rx",
-        #         markersize=8,
-        #         label="Detected Peak" if not detected_label_used else None,
-        #     )
-        #     detected_label_used = True
+            for laser_id, peak_wl in assignments.items():
+                if peak_wl is None:
+                    continue
 
-        for name, peak_wl in assignments.items():
-            if peak_wl is None:
-                continue
-            if (self.cavity.end_wv_nm - self.cavity.start_wv_nm) == 0:
-                continue
+                t_peak = ((peak_wl - self.cavity.start_wv_nm) / span) * self.dt
+                idx = np.abs(scan_range - peak_wl).argmin()
+                style = assignment_styles.get(
+                    laser_id, {"marker": "o", "label": f"Assigned {laser_id} Peak"}
+                )
 
-            t_peak = (
-                (peak_wl - self.cavity.start_wv_nm)
-                / (self.cavity.end_wv_nm - self.cavity.start_wv_nm)
-                * self.dt
-            )
-            idx = np.abs(scan_range - peak_wl).argmin()
-            style = assignment_styles.get(name, {"marker": "o", "label": f"{name} Peak"})
-
-            axes[2].plot(
-                t_peak,
-                scan_output[idx],
-                linestyle="None",
-                marker=style["marker"],
-                markersize=10,
-                label=style["label"],
-            )
+                axes[2].plot(
+                    t_peak,
+                    scan_output[idx],
+                    linestyle="None",
+                    marker=style["marker"],
+                    markersize=10,
+                    label=style["label"],
+                )
 
         axes[2].set_xlabel("Time within Scan (s)")
         axes[2].set_ylabel("Voltage (V)")

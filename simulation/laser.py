@@ -11,16 +11,18 @@ class LaserController:
 
 
 class Laser:
-    def __init__(self, id, wavelength, modifier=1.0):
+    def __init__(self, id, start, target, modifier=1.0):
         self.id = id
-        self.base_wavelength = wavelength
+        self.base_wavelength = start
         self.drift_offset = 0.0
-        self.control_voltage = 0.0
+        self.control_voltage = 0.0          # commanded by PID
+        self.applied_control_voltage = 0.0  # actual actuator output after bandwidth limit
+        self.control_tau = 0.05             # 50 ms actuator time constant
         self.sensitivity = 3  # nm/V, adjust sensitivity as needed
         self.modifier = modifier
         self.drift_enabled = True
 
-        self.target_wavelength = wavelength  # Default target to initial wavelength
+        self.target_wavelength = target  # Default target to initial wavelength
 
         # lorentzian profile: A * (Γ/2) / [ (x - x₀)² + (Γ/2)² ]
         self.amplitude = random.uniform(0.02, 0.1)  # random amplitude on [20,100] mV
@@ -65,7 +67,7 @@ class Laser:
             self.base_wavelength
             + self.drift_offset
             + self.transient_offset
-            + (self.control_voltage * self.sensitivity)
+            + (self.applied_control_voltage * self.sensitivity)
         )
     
     def trigger_fast_jump(self, jump_nm, duration=0.01):
@@ -97,8 +99,11 @@ class Laser:
 
         if self.transient_remaining > 0:
             self.transient_remaining -= dt
-            self.transient_offset *= 0.1
-            if (self.transient_remaining <= 0 or abs(self.transient_offset) < 0.0001):
+
+            transient_tau = 0.08   # 80 ms return timescale; tune this
+            self.transient_offset *= np.exp(-dt / transient_tau)
+
+            if self.transient_remaining <= 0 or abs(self.transient_offset) < 0.0001:
                 self.transient_offset = 0.0
                 self.transient_remaining = 0.0
 
@@ -106,6 +111,12 @@ class Laser:
             self.blocked_remaining -= dt
             if self.blocked_remaining < 0:
                 self.blocked_remaining = 0.0
+
+        # First-order actuator bandwidth - PID commands a voltage instantly but laser sees it gradually
+        alpha = 1 - np.exp(-dt / self.control_tau)
+        self.applied_control_voltage += alpha * (
+            self.control_voltage - self.applied_control_voltage
+        )
 
 
     def get_scan_parameters(self):

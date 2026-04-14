@@ -55,7 +55,10 @@ class SimpleThresholdDetector(PeakDetector):
         # Sort by amplitude descending
         candidates.sort(key=lambda x: x[1], reverse=True)
 
-        # Return only positions
+        # Keep only the strongest few candidates to control assignment cost
+        max_candidates = 8
+        candidates = candidates[:max_candidates]
+
         return [p[0] for p in candidates]
 
 
