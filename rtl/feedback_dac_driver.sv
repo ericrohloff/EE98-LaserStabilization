@@ -48,7 +48,6 @@ reg [23:0] shift_reg;
 
 reg [2:0] clk_div_count;
 reg [4:0] bits_sent;
-reg last_bit_sampled;
 reg [5:0] load_wait_count;
 reg load_prepared;
 
@@ -74,7 +73,6 @@ always @(posedge clk or posedge reset) begin
         shift_reg <= 24'd0;
         clk_div_count <= 3'd0;
         bits_sent <= 5'd0;
-        last_bit_sampled <= 1'b0;
         load_wait_count <= 6'd0;
         load_prepared <= 1'b0;
         dac_cs_r <= 1'b1;
@@ -88,7 +86,6 @@ always @(posedge clk or posedge reset) begin
                 dac_sck_r <= 1'b0;
                 clk_div_count <= 3'd0;
                 bits_sent <= 5'd0;
-                last_bit_sampled <= 1'b0;
                 load_wait_count <= 6'd0;
                 load_prepared <= 1'b0;
 
@@ -116,7 +113,6 @@ always @(posedge clk or posedge reset) begin
                 dac_sck_r <= 1'b0;
                 clk_div_count <= 3'd0;
                 bits_sent <= 5'd0;
-                last_bit_sampled <= 1'b0;
 
                 if (!load_prepared) begin
                     load_wait_count <= 6'd0;
@@ -167,19 +163,17 @@ always @(posedge clk or posedge reset) begin
                     clk_div_count <= 3'd0;
 
                     if (!dac_sck_r) begin
-                        // Rising edge: DAC samples MOSI in SPI mode 0.
+                        // Rising edge: advance MOSI to the next bit so it is stable for the falling-edge sample.
                         dac_sck_r <= 1'b1;
-                        if (bits_sent == 5'd23) begin
-                            last_bit_sampled <= 1'b1;
+                        if (bits_sent != 5'd0) begin
+                            shift_reg <= {shift_reg[22:0], 1'b0};
+                            dac_mosi_r <= shift_reg[22];
                         end
-                        bits_sent <= bits_sent + 5'd1;
                     end else begin
-                        // Falling edge: update next MOSI bit.
+                        // Falling edge: DAC samples MOSI.
                         dac_sck_r <= 1'b0;
 
-                        if (last_bit_sampled) begin
-                            dac_cs_r <= 1'b1;
-                            last_bit_sampled <= 1'b0;
+                        if (bits_sent == 5'd23) begin
                             bits_sent <= 5'd0;
 
                             if (pending_mask != 4'b0000) begin
@@ -188,8 +182,7 @@ always @(posedge clk or posedge reset) begin
                                 state <= ST_IDLE;
                             end
                         end else begin
-                            shift_reg <= {shift_reg[22:0], 1'b0};
-                            dac_mosi_r <= shift_reg[22];
+                            bits_sent <= bits_sent + 5'd1;
                         end
                     end
                 end else begin

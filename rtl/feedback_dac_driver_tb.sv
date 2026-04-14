@@ -95,27 +95,27 @@ module feedback_dac_driver_tb;
         input int frame_number
     );
         logic [23:0] captured_frame;
-        time previous_rise_time;
+        time previous_fall_time;
         time delta_time;
         begin
             captured_frame   = 24'd0;
-            previous_rise_time = 0;
+            previous_fall_time = 0;
 
             repeat (24) begin
-                @(posedge dac_sck);
+                @(negedge dac_sck);
 
                 if (dac_cs !== 1'b0) begin
                     $error("Frame %0d: dac_cs should be low while shifting", frame_number);
                 end
 
-                if (previous_rise_time != 0) begin
-                    delta_time = $time - previous_rise_time;
+                if (previous_fall_time != 0) begin
+                    delta_time = $time - previous_fall_time;
                     if (delta_time != 100) begin
                         $error("Frame %0d: SCK period should be 100 ns, got %0t ns", frame_number, delta_time);
                     end
                 end
 
-                previous_rise_time = $time;
+                previous_fall_time = $time;
                 captured_frame = {captured_frame[22:0], dac_mosi};
             end
 
@@ -213,10 +213,10 @@ module feedback_dac_driver_tb;
         enable = 1'b1;
 
         run_scenario(
-            16'h1111, 1'b1,
-            16'h2222, 1'b1,
-            16'h3333, 1'b1,
-            16'h4444, 1'b1,
+            16'hFFFF, 1'b1,
+            16'hFFFF, 1'b1,
+            16'hFFFF, 1'b1,
+            16'hFFFF, 1'b1,
             4,
             1'b0
         );
