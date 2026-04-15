@@ -4276,7 +4276,6 @@
       "adc_frontend_wrapper_0_adc_sample_unsigned": {
         "ports": [
           "algorithm_top_wrapper_0/adc_sample_unsigned",
-          "axi_config_registers_0/ref_detected_wavelength",
           "axi_registers_0/adc_debug"
         ]
       },
@@ -4386,6 +4385,36 @@
         "ports": [
           "algorithm_top_wrapper_0/feedback_dac_sck",
           "feedback_dac_sck"
+        ]
+      },
+      "algorithm_top_wrapper_0_l1_detected_wavelength": {
+        "ports": [
+          "algorithm_top_wrapper_0/l1_detected_wavelength",
+          "axi_config_registers_0/l1_detected_wavelength"
+        ]
+      },
+      "algorithm_top_wrapper_0_l2_detected_wavelength": {
+        "ports": [
+          "algorithm_top_wrapper_0/l2_detected_wavelength",
+          "axi_config_registers_0/l2_detected_wavelength"
+        ]
+      },
+      "algorithm_top_wrapper_0_l3_detected_wavelength": {
+        "ports": [
+          "algorithm_top_wrapper_0/l3_detected_wavelength",
+          "axi_config_registers_0/l3_detected_wavelength"
+        ]
+      },
+      "algorithm_top_wrapper_0_l4_detected_wavelength": {
+        "ports": [
+          "algorithm_top_wrapper_0/l4_detected_wavelength",
+          "axi_config_registers_0/l4_detected_wavelength"
+        ]
+      },
+      "algorithm_top_wrapper_0_ref_detected_wavelength": {
+        "ports": [
+          "algorithm_top_wrapper_0/ref_detected_wavelength",
+          "axi_config_registers_0/ref_detected_wavelength"
         ]
       },
       "axi_config_registers_0_l1_exists": {
