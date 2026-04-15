@@ -1,7 +1,7 @@
 {
   "design": {
     "design_info": {
-      "boundary_crc": "0x1F301BFECBCAB7D4",
+      "boundary_crc": "0x14FF79504B6A611F",
       "device": "xczu3eg-sfvc784-2-e",
       "gen_directory": "../../../../vivado.gen/sources_1/bd/design_1",
       "name": "design_1",
@@ -148,6 +148,86 @@
         }
       },
       "feedback_dac_cs": {
+        "type": "data",
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
+      },
+      "debug_pin_0": {
+        "type": "data",
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
+      },
+      "debug_pin_1": {
+        "type": "data",
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
+      },
+      "debug_pin_2": {
+        "type": "data",
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
+      },
+      "debug_pin_3": {
+        "type": "data",
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
+      },
+      "debug_pin_4": {
+        "type": "data",
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
+      },
+      "debug_pin_5": {
+        "type": "data",
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
+      },
+      "debug_pin_6": {
+        "type": "data",
+        "direction": "O",
+        "parameters": {
+          "LAYERED_METADATA": {
+            "value": "undef",
+            "value_src": "default"
+          }
+        }
+      },
+      "debug_pin_7": {
         "type": "data",
         "direction": "O",
         "parameters": {
@@ -4126,6 +4206,30 @@
           },
           "feedback_dac_cs": {
             "direction": "O"
+          },
+          "debug_pin_0": {
+            "direction": "O"
+          },
+          "debug_pin_1": {
+            "direction": "O"
+          },
+          "debug_pin_2": {
+            "direction": "O"
+          },
+          "debug_pin_3": {
+            "direction": "O"
+          },
+          "debug_pin_4": {
+            "direction": "O"
+          },
+          "debug_pin_5": {
+            "direction": "O"
+          },
+          "debug_pin_6": {
+            "direction": "O"
+          },
+          "debug_pin_7": {
+            "direction": "O"
           }
         }
       }
@@ -4216,6 +4320,54 @@
         "ports": [
           "algorithm_top_wrapper_0/dac_sck",
           "clk_output"
+        ]
+      },
+      "algorithm_top_wrapper_0_debug_pin_0": {
+        "ports": [
+          "algorithm_top_wrapper_0/debug_pin_0",
+          "debug_pin_0"
+        ]
+      },
+      "algorithm_top_wrapper_0_debug_pin_1": {
+        "ports": [
+          "algorithm_top_wrapper_0/debug_pin_1",
+          "debug_pin_1"
+        ]
+      },
+      "algorithm_top_wrapper_0_debug_pin_2": {
+        "ports": [
+          "algorithm_top_wrapper_0/debug_pin_2",
+          "debug_pin_2"
+        ]
+      },
+      "algorithm_top_wrapper_0_debug_pin_3": {
+        "ports": [
+          "algorithm_top_wrapper_0/debug_pin_3",
+          "debug_pin_3"
+        ]
+      },
+      "algorithm_top_wrapper_0_debug_pin_4": {
+        "ports": [
+          "algorithm_top_wrapper_0/debug_pin_4",
+          "debug_pin_4"
+        ]
+      },
+      "algorithm_top_wrapper_0_debug_pin_5": {
+        "ports": [
+          "algorithm_top_wrapper_0/debug_pin_5",
+          "debug_pin_5"
+        ]
+      },
+      "algorithm_top_wrapper_0_debug_pin_6": {
+        "ports": [
+          "algorithm_top_wrapper_0/debug_pin_6",
+          "debug_pin_6"
+        ]
+      },
+      "algorithm_top_wrapper_0_debug_pin_7": {
+        "ports": [
+          "algorithm_top_wrapper_0/debug_pin_7",
+          "debug_pin_7"
         ]
       },
       "algorithm_top_wrapper_0_feedback_dac_cs": {
