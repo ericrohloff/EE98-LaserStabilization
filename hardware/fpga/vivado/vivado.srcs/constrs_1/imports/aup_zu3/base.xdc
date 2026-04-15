@@ -150,36 +150,67 @@ set_property PULLUP true [get_ports {iop_pmod1[7]}]
 ################################################################################
 ## Rasbery PI Headers
 ################################################################################
-set_property PACKAGE_PIN AF10 [get_ports {iop_rpi0[0]}]
-#set_property PACKAGE_PIN AF10 [get_ports clk_out1_0]
+# set_property PACKAGE_PIN AF10 [get_ports {iop_rpi0[0]}]
+set_property PACKAGE_PIN AF10 [get_ports {debug_pin_0}]
+
 set_property PACKAGE_PIN AG10 [get_ports {iop_rpi0[1]}]
 set_property PACKAGE_PIN AC12 [get_ports {iop_rpi0[2]}]
 set_property PACKAGE_PIN AD12 [get_ports {iop_rpi0[3]}]
 set_property PACKAGE_PIN AE12 [get_ports {iop_rpi0[4]}]
-set_property PACKAGE_PIN AE10 [get_ports {iop_rpi0[5]}]
-set_property PACKAGE_PIN AB11 [get_ports {iop_rpi0[6]}]
+
+# set_property PACKAGE_PIN AE10 [get_ports {iop_rpi0[5]}]
+set_property PACKAGE_PIN AE10 [get_ports {debug_pin_1}]
+
+# set_property PACKAGE_PIN AB11 [get_ports {iop_rpi0[6]}]
+set_property PACKAGE_PIN AB11 [get_ports {debug_pin_2}]
+
 set_property PACKAGE_PIN AD11 [get_ports {iop_rpi0[7]}]
 set_property PACKAGE_PIN AG11 [get_ports {iop_rpi0[8]}]
 set_property PACKAGE_PIN AH11 [get_ports {iop_rpi0[9]}]
 set_property PACKAGE_PIN AH12 [get_ports {iop_rpi0[10]}]
 set_property PACKAGE_PIN AH10 [get_ports {iop_rpi0[11]}]
 set_property PACKAGE_PIN AD10 [get_ports {iop_rpi0[12]}]
-set_property PACKAGE_PIN AA11 [get_ports {iop_rpi0[13]}]
-set_property PACKAGE_PIN AE15 [get_ports {iop_rpi0[14]}]
-set_property PACKAGE_PIN AF13 [get_ports {iop_rpi0[15]}]
-set_property PACKAGE_PIN AB10 [get_ports {iop_rpi0[16]}]
+
+# set_property PACKAGE_PIN AA11 [get_ports {iop_rpi0[13]}]
+set_property PACKAGE_PIN AA11 [get_ports {debug_pin_3}]
+#set_property PACKAGE_PIN AE15 [get_ports {iop_rpi0[14]}]
+set_property PACKAGE_PIN AE15 [get_ports {feedback_dac_mosi}]
+#set_property PACKAGE_PIN AF13 [get_ports {iop_rpi0[15]}]
+set_property PACKAGE_PIN AF13 [get_ports {feedback_dac_sck}]
+
+# set_property PACKAGE_PIN AB10 [get_ports {iop_rpi0[16]}]
+set_property PACKAGE_PIN AB10 [get_ports {debug_pin_5}]
+
 set_property PACKAGE_PIN AG14 [get_ports {iop_rpi0[17]}]
-set_property PACKAGE_PIN AC11 [get_ports {iop_rpi0[18]}]
-set_property PACKAGE_PIN AB9 [get_ports {iop_rpi0[19]}]
-set_property PACKAGE_PIN AA10 [get_ports {iop_rpi0[20]}]
+
+#set_property PACKAGE_PIN AC11 [get_ports {iop_rpi0[18]}]
+set_property PACKAGE_PIN AC11 [get_ports {feedback_dac_cs}]
+# set_property PACKAGE_PIN AB9 [get_ports {iop_rpi0[19]}]
+set_property PACKAGE_PIN AB9 [get_ports {debug_pin_4}]
+
+# set_property PACKAGE_PIN AA10 [get_ports {iop_rpi0[20]}]
+set_property PACKAGE_PIN AA10 [get_ports {debug_pin_7}]
 set_property PACKAGE_PIN Y9 [get_ports {iop_rpi0[21]}]
 #set_property PACKAGE_PIN Y9 [get_ports {clk_output}]
 set_property PACKAGE_PIN AH13 [get_ports {iop_rpi0[22]}]
 set_property PACKAGE_PIN AG13 [get_ports {iop_rpi0[23]}]
 set_property PACKAGE_PIN AF12 [get_ports {iop_rpi0[24]}]
 set_property PACKAGE_PIN AF11 [get_ports {iop_rpi0[25]}]
-set_property PACKAGE_PIN AA8 [get_ports {iop_rpi0[26]}]
+
+# set_property PACKAGE_PIN AA8 [get_ports {iop_rpi0[26]}]
+set_property PACKAGE_PIN AA8 [get_ports {debug_pin_6}]
+
 set_property PACKAGE_PIN AH14 [get_ports {iop_rpi0[27]}]
+
+# debug pin <--> physical pin <--> rpi gpio #
+# 0 - 27- 0
+# 1 - 29- 5
+# 2 - 31- 6
+# 3 - 33- 13
+# 4 -35- 19
+# 5 - 36- 16 
+# 6 - 37- 26 
+# 7 - 38- 20 
 
 set_property PULLUP TRUE [get_ports {iop_rpi0[17]}]; 
 set_property PULLUP TRUE [get_ports {iop_rpi0[18]}]; 
@@ -192,6 +223,19 @@ set_property IOSTANDARD LVCMOS33 [get_ports {dac_mosi}];
 set_property IOSTANDARD LVCMOS33 [get_ports {adc_sck}]; 
 set_property IOSTANDARD LVCMOS33 [get_ports {adc_miso}]; 
 set_property IOSTANDARD LVCMOS33 [get_ports {adc_cnv}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {feedback_dac_mosi}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {feedback_dac_sck}]; 
+set_property IOSTANDARD LVCMOS33 [get_ports {feedback_dac_cs}]; 
+
+set_property IOSTANDARD LVCMOS33 [get_ports {debug_pin_0}];
+set_property IOSTANDARD LVCMOS33 [get_ports {debug_pin_1}];
+set_property IOSTANDARD LVCMOS33 [get_ports {debug_pin_2}];
+set_property IOSTANDARD LVCMOS33 [get_ports {debug_pin_3}];
+set_property IOSTANDARD LVCMOS33 [get_ports {debug_pin_4}];
+set_property IOSTANDARD LVCMOS33 [get_ports {debug_pin_5}];
+set_property IOSTANDARD LVCMOS33 [get_ports {debug_pin_6}];
+set_property IOSTANDARD LVCMOS33 [get_ports {debug_pin_7}];
+
 
 set_property SLEW FAST [get_ports {clk_output}]; 
 set_property DRIVE 16 [get_ports {clk_output}];

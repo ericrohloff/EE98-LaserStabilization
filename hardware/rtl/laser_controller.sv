@@ -4,7 +4,7 @@
 module laser_controller (
     input logic ramp_start,
 
-    input logic [3:0 ] laser_id,
+    input logic [3:0] laser_id,
     input logic laser_exists,
     input logic laser_locked,
 
@@ -19,6 +19,6 @@ module laser_controller (
     output logic [16:0] feedback
 );
 
-assign feedback = 0;
+assign feedback = {laser_id, 4'h8};
 
 endmodule

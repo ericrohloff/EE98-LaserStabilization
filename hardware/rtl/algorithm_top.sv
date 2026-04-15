@@ -60,7 +60,23 @@ module algorithm_top (
 	output wire dac_mosi,
 	output wire dac_sck,
 	output wire dac_cs,
-	output wire dac_ldac_n
+	output wire dac_ldac_n,
+
+    // Ramp DAC
+	output wire feedback_dac_mosi,
+	output wire feedback_dac_sck,
+	output wire feedback_dac_cs,
+
+    // Debug
+    output wire debug_pin_0,
+    output wire debug_pin_1,
+    output wire debug_pin_2,
+    output wire debug_pin_3,
+    output wire debug_pin_4,
+    output wire debug_pin_5,
+    output wire debug_pin_6,
+    output wire debug_pin_7
+
 );
 
     logic [6:0] seq_frame_tick;
@@ -72,10 +88,13 @@ module algorithm_top (
         .frame_tick(seq_frame_tick)
     );
 
+    logic ramp_done;
+    assign debug_pin_0 = ramp_done;
+
 	ramp_dac_spi u_ramp_dac_spi (
         .clk(clk),
         .reset(reset),
-        .enable(enable),
+        .enable(enable && system_on),
         .frame_tick(seq_frame_tick),
         .ramp_step(64),
         .ramp_min(16'd0),
@@ -84,13 +103,14 @@ module algorithm_top (
         .ramp_dac_cs_n(dac_cs),
         .ramp_dac_sck(dac_sck),
         .ramp_dac_mosi(dac_mosi),
-        .ramp_dac_ldac_n(dac_ldac_n)
+        .ramp_dac_ldac_n(dac_ldac_n),
+        .ramp_done(ramp_done)
     );
 
 	adc_frontend u_adc_frontend (
         .clk(clk),
         .reset(reset),
-        .enable(enable),
+        .enable(enable && system_on),
         .frame_tick(seq_frame_tick),
         .adc_miso(adc_miso),
         .adc_cnv(adc_cnv),
@@ -102,6 +122,11 @@ module algorithm_top (
     logic [15:0] l2_peak_position;
     logic [15:0] l3_peak_position;
     logic [15:0] l4_peak_position;
+
+    logic [15:0] l1_feedback;
+    logic [15:0] l2_feedback;
+    logic [15:0] l3_feedback;
+    logic [15:0] l4_feedback;
 
 	peak_detection u_peak_detection (
         .adc_sample(adc_sample_unsigned),
@@ -126,7 +151,8 @@ module algorithm_top (
         .pid_d(l1_pid_d),
         .set_wavelength(l1_set_wavelength),
         .current_wavelength(l1_peak_position),
-        .ref_wavelength(ref_set_wavelength)
+        .ref_wavelength(ref_set_wavelength),
+        .feedback(l1_feedback)
     );
 	laser_controller u_l2_controller (
         .laser_id(l2_id),
@@ -137,7 +163,8 @@ module algorithm_top (
         .pid_d(l2_pid_d),
         .set_wavelength(l2_set_wavelength),
         .current_wavelength(l2_peak_position),
-        .ref_wavelength(ref_set_wavelength)
+        .ref_wavelength(ref_set_wavelength),
+        .feedback(l2_feedback)
     );
 	laser_controller u_l3_controller (
         .laser_id(l3_id),
@@ -148,7 +175,8 @@ module algorithm_top (
         .pid_d(l3_pid_d),
         .set_wavelength(l3_set_wavelength),
         .current_wavelength(l3_peak_position),
-        .ref_wavelength(ref_set_wavelength)
+        .ref_wavelength(ref_set_wavelength),
+        .feedback(l3_feedback)
     );
 	laser_controller u_l4_controller (
         .laser_id(l4_id),
@@ -159,7 +187,31 @@ module algorithm_top (
         .pid_d(l4_pid_d),
         .set_wavelength(l4_set_wavelength),
         .current_wavelength(l4_peak_position),
-        .ref_wavelength(ref_set_wavelength)
+        .ref_wavelength(ref_set_wavelength),
+        .feedback(l4_feedback)
+    );
+
+    feedback_dac_driver u_feedback_dac (
+        .clk(clk),
+        .enable(enable),
+        .reset(reset),
+        .update_trigger(ramp_done),
+        // .l1_feedback_value(l1_feedback),
+        .l1_feedback_value(16'hFFFF),
+        .l1_feedback_enable(1),
+        // .l2_feedback_value(l2_feedback),
+        .l2_feedback_value(16'hFFFF),
+        .l2_feedback_enable(1),
+        // .l3_feedback_value(l3_feedback),
+        .l3_feedback_value(16'hFFFF),
+        .l3_feedback_enable(1),
+        // .l4_feedback_value(l4_feedback),
+        .l4_feedback_value(16'hFFFF),
+        .l4_feedback_enable(1),
+
+        .dac_cs(feedback_dac_cs),
+        .dac_mosi(feedback_dac_mosi),
+        .dac_sck(feedback_dac_sck)
     );
 
 endmodule

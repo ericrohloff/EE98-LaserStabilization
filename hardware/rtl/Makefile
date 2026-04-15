@@ -5,7 +5,7 @@ IVERILOG = iverilog
 VVP = vvp
 
 # Targets
-.PHONY: all clean sim spi_sim dac_sim ramp_sim pid dac ramp
+.PHONY: all clean sim spi_sim dac_sim ramp_sim pid dac ramp feedback_dac_sim
 
 all: sim
 
@@ -31,6 +31,9 @@ ramp: ramp_sim
 ramp_sim: ramp_bringup_tb.vvp
 	$(VVP) ramp_bringup_tb.vvp
 
+feedback_dac_sim: feedback_dac_driver_tb.vvp
+	$(VVP) feedback_dac_driver_tb.vvp
+
 pid_tb.vvp: pid_controller.sv pid_controller_tb.sv
 	$(IVERILOG) -g2012 -o pid_tb.vvp pid_controller.sv pid_controller_tb.sv
 
@@ -43,5 +46,8 @@ dac_tb.vvp: dac_driver.sv spi_controller.sv dac_driver_tb.sv
 ramp_bringup_tb.vvp: global_timing_sequencer.sv ramp_dac_spi.sv adc_frontend.sv output_dac_spi.sv ramp_dac_bringup_tb.sv
 	$(IVERILOG) -g2012 -o ramp_bringup_tb.vvp global_timing_sequencer.sv ramp_dac_spi.sv adc_frontend.sv output_dac_spi.sv ramp_dac_bringup_tb.sv
 
+feedback_dac_driver_tb.vvp: feedback_dac_driver.sv feedback_dac_driver_tb.sv
+	$(IVERILOG) -g2012 -o feedback_dac_driver_tb.vvp feedback_dac_driver.sv feedback_dac_driver_tb.sv
+
 clean:
-	rm -f pid_tb.vvp spi_tb.vvp dac_tb.vvp ramp_bringup_tb.vvp
+	rm -f pid_tb.vvp spi_tb.vvp dac_tb.vvp ramp_bringup_tb.vvp feedback_dac_driver_tb.vvp

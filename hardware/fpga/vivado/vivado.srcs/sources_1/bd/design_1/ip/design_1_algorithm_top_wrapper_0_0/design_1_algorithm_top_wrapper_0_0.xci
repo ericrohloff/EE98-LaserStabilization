@@ -109,7 +109,18 @@
                   &quot;dac_mosi&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
                   &quot;dac_sck&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
                   &quot;dac_cs&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
-                  &quot;dac_ldac_n&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ]
+                  &quot;dac_ldac_n&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;feedback_dac_mosi&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;feedback_dac_sck&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;feedback_dac_cs&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;debug_pin_0&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;debug_pin_1&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;debug_pin_2&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;debug_pin_3&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;debug_pin_4&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;debug_pin_5&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;debug_pin_6&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
+                  &quot;debug_pin_7&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ]
                 },
                 &quot;interfaces&quot;: {
                   &quot;reset&quot;: {
