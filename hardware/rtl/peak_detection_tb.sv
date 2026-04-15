@@ -18,6 +18,10 @@ module peak_detection_tb;
     logic [15:0] l2_position;
     logic [15:0] l3_position;
     logic [15:0] l4_position;
+    logic l1_valid;
+    logic l2_valid;
+    logic l3_valid;
+    logic l4_valid;
 
     integer stim_fd;
     integer log_fd;
@@ -55,7 +59,11 @@ module peak_detection_tb;
         .l1_position(l1_position),
         .l2_position(l2_position),
         .l3_position(l3_position),
-        .l4_position(l4_position)
+        .l4_position(l4_position),
+        .l1_valid(l1_valid),
+        .l2_valid(l2_valid),
+        .l3_valid(l3_valid),
+        .l4_valid(l4_valid)
     );
 
     initial begin

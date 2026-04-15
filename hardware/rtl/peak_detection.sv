@@ -17,7 +17,11 @@ module peak_detection #(
 	output logic [15:0] l1_position,
 	output logic [15:0] l2_position,
 	output logic [15:0] l3_position,
-	output logic [15:0] l4_position
+	output logic [15:0] l4_position,
+	output logic        l1_valid,
+	output logic        l2_valid,
+	output logic        l3_valid,
+	output logic        l4_valid
 );
 
 	localparam int unsigned IDX_W = (MAX_CANDIDATES <= 2) ? 1 : $clog2(MAX_CANDIDATES);
@@ -76,6 +80,10 @@ module peak_detection #(
 			curr_peak_amp  <= 16'd0;
 			curr_peak_pos  <= 16'd0;
 			candidate_count <= '0;
+			l1_valid <= 1'b0;
+			l2_valid <= 1'b0;
+			l3_valid <= 1'b0;
+			l4_valid <= 1'b0;
 
 			l1_position <= l1_target;
 			l2_position <= l2_target;
@@ -88,6 +96,11 @@ module peak_detection #(
 				candidate_valid[i] <= 1'b0;
 			end
 		end else begin
+			l1_valid <= 1'b0;
+			l2_valid <= 1'b0;
+			l3_valid <= 1'b0;
+			l4_valid <= 1'b0;
+
 			if (ramp_start) begin
 				logic [MAX_CANDIDATES-1:0] used_mask;
 				logic found;
@@ -114,24 +127,29 @@ module peak_detection #(
 				select_candidate(l1_target, used_mask, found, idx);
 				if (found) begin
 					l1_position <= candidate_pos[idx];
+					l1_valid <= 1'b1;
 					used_mask[idx] = 1'b1;
 				end
 
 				select_candidate(l2_target, used_mask, found, idx);
 				if (found) begin
 					l2_position <= candidate_pos[idx];
+					l2_valid <= 1'b1;
 					used_mask[idx] = 1'b1;
 				end
 
 				select_candidate(l3_target, used_mask, found, idx);
 				if (found) begin
 					l3_position <= candidate_pos[idx];
+					l3_valid <= 1'b1;
 					used_mask[idx] = 1'b1;
 				end
 
 				select_candidate(l4_target, used_mask, found, idx);
-				if (found)
+				if (found) begin
 					l4_position <= candidate_pos[idx];
+					l4_valid <= 1'b1;
+				end
 
 				candidate_count <= '0;
 				for (i = 0; i < MAX_CANDIDATES; i = i + 1) begin
