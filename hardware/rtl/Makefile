@@ -34,9 +34,13 @@ ramp_sim: ramp_bringup_tb.vvp
 feedback_dac_sim: feedback_dac_driver_tb.vvp
 	$(VVP) feedback_dac_driver_tb.vvp
 
-peak: peak_sim
-	cd ../../tests/rtlValidation; \
-	python3 compare_peak_outputs.py --plot
+vector_sim:
+	cd ../../simulation && python3 run_sim_export_vectors.py
+
+test_verilog_algorithms: vector_sim peak_sim pid_vector_sim
+	cd ../../tests/rtlValidation && \
+	python3 compare_peak_outputs.py && \
+	python3 compare_pid_outputs.py
 
 peak_sim: peak_detection_tb.vvp
 	$(VVP) peak_detection_tb.vvp

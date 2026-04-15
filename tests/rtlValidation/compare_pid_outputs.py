@@ -50,15 +50,15 @@ def plot_comparison(expected, dut, output_path=None, show_plot=True):
 
     fig, axes = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
 
-    axes[0].plot(steps, exp_vals, label="Expected (Python PID)", linewidth=1.8, marker="o")
-    axes[0].plot(steps, dut_vals, label="DUT (RTL)", linewidth=1.4, linestyle="--", marker="x")
+    axes[0].plot(steps, exp_vals, label="Python", linewidth=1.8, marker="o")
+    axes[0].plot(steps, dut_vals, label="Verilog", linewidth=1.4, linestyle="--", marker="x")
     axes[0].set_ylabel("Feedback (u16)")
-    axes[0].set_title("PID Feedback Over Time")
+    axes[0].set_title("PID Feedback Over Time: Python vs Verilog")
     axes[0].grid(True, alpha=0.3)
     axes[0].legend()
 
     axes[1].axhline(0, color="black", linewidth=1)
-    axes[1].plot(steps, err, label="Error (dut - expected)", linewidth=1.4, marker=".")
+    axes[1].plot(steps, err, label="Error (Verilog - Python)", linewidth=1.4, marker=".")
     axes[1].set_xlabel("Step Index")
     axes[1].set_ylabel("u16 LSB")
     axes[1].set_title("PID Output Error")

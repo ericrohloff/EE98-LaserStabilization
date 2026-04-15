@@ -25,21 +25,21 @@ def plot_comparison(expected, dut, output_path=None, show_plot=True):
         exp_vals = to_int_series(expected, ch)
         dut_vals = to_int_series(dut, ch)
 
-        axes[0].plot(scans, exp_vals, marker="o", linewidth=1.5, label=f"{ch} expected")
+        axes[0].plot(scans, exp_vals, marker="o", linewidth=1.5, label=f"{ch} Python")
         axes[0].plot(
             scans,
             dut_vals,
             linestyle="--",
             marker="x",
             linewidth=1.2,
-            label=f"{ch} dut",
+            label=f"{ch} Verilog",
         )
 
         err = [d - e for d, e in zip(dut_vals, exp_vals)]
-        axes[1].plot(scans, err, marker=".", linewidth=1.2, label=f"{ch} error")
+        axes[1].plot(scans, err, marker=".", linewidth=1.2, label=f"{ch} error (Verilog - Python)")
 
     axes[0].set_ylabel("Ramp Position")
-    axes[0].set_title("Peak Positions: Python Expected vs Verilog DUT")
+    axes[0].set_title("Peak Positions: Python vs Verilog")
     axes[0].grid(True, alpha=0.3)
     axes[0].legend(ncol=2, fontsize=8)
 
