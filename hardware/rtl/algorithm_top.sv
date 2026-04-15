@@ -89,6 +89,9 @@ module algorithm_top (
     );
 
     logic ramp_done;
+    logic ramp_cycle_start;
+    logic [15:0] current_ramp_pos;
+    logic adc_sample_valid;
     assign debug_pin_0 = ramp_done;
 
 	ramp_dac_spi u_ramp_dac_spi (
@@ -104,6 +107,8 @@ module algorithm_top (
         .ramp_dac_sck(dac_sck),
         .ramp_dac_mosi(dac_mosi),
         .ramp_dac_ldac_n(dac_ldac_n),
+        .current_ramp_pos(current_ramp_pos),
+        .ramp_cycle_start(ramp_cycle_start),
         .ramp_done(ramp_done)
     );
 
@@ -115,7 +120,8 @@ module algorithm_top (
         .adc_miso(adc_miso),
         .adc_cnv(adc_cnv),
         .adc_sck(adc_sck),
-        .adc_sample_unsigned(adc_sample_unsigned)
+        .adc_sample_unsigned(adc_sample_unsigned),
+        .adc_sample_valid(adc_sample_valid)
     );
 
     logic [15:0] l1_peak_position;
@@ -129,8 +135,13 @@ module algorithm_top (
     logic [15:0] l4_feedback;
 
 	peak_detection u_peak_detection (
+        .clk(clk),
+        .reset(reset),
         .adc_sample(adc_sample_unsigned),
-        .ramp_start(), // TODO
+        .adc_sample_valid(adc_sample_valid),
+        .current_ramp_pos(current_ramp_pos),
+        .ramp_start(ramp_cycle_start),
+        .ref_target(ref_set_wavelength),
         .l1_target(l1_set_wavelength),
         .l2_target(l2_set_wavelength),
         .l3_target(l3_set_wavelength),
