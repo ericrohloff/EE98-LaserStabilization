@@ -89,6 +89,9 @@ module algorithm_top (
     );
 
     logic ramp_done;
+    logic ramp_cycle_start;
+    logic [15:0] current_ramp_pos;
+    logic adc_sample_valid;
     assign debug_pin_0 = ramp_done;
 
 	ramp_dac_spi u_ramp_dac_spi (
@@ -104,6 +107,8 @@ module algorithm_top (
         .ramp_dac_sck(dac_sck),
         .ramp_dac_mosi(dac_mosi),
         .ramp_dac_ldac_n(dac_ldac_n),
+        .current_ramp_pos(current_ramp_pos),
+        .ramp_cycle_start(ramp_cycle_start),
         .ramp_done(ramp_done)
     );
 
@@ -115,7 +120,8 @@ module algorithm_top (
         .adc_miso(adc_miso),
         .adc_cnv(adc_cnv),
         .adc_sck(adc_sck),
-        .adc_sample_unsigned(adc_sample_unsigned)
+        .adc_sample_unsigned(adc_sample_unsigned),
+        .adc_sample_valid(adc_sample_valid)
     );
 
     logic [15:0] l1_peak_position;
@@ -123,14 +129,24 @@ module algorithm_top (
     logic [15:0] l3_peak_position;
     logic [15:0] l4_peak_position;
 
+    logic l1_peak_valid;
+    logic l2_peak_valid;
+    logic l3_peak_valid;
+    logic l4_peak_valid;
+
     logic [15:0] l1_feedback;
     logic [15:0] l2_feedback;
     logic [15:0] l3_feedback;
     logic [15:0] l4_feedback;
 
 	peak_detection u_peak_detection (
+        .clk(clk),
+        .reset(reset),
         .adc_sample(adc_sample_unsigned),
-        .ramp_start(), // TODO
+        .adc_sample_valid(adc_sample_valid),
+        .current_ramp_pos(current_ramp_pos),
+        .ramp_start(ramp_cycle_start),
+        .ref_target(ref_set_wavelength),
         .l1_target(l1_set_wavelength),
         .l2_target(l2_set_wavelength),
         .l3_target(l3_set_wavelength),
@@ -139,10 +155,18 @@ module algorithm_top (
         .l1_position(l1_peak_position),
         .l2_position(l2_peak_position),
         .l3_position(l3_peak_position),
-        .l4_position(l4_peak_position)
+        .l4_position(l4_peak_position),
+        .l1_valid(l1_peak_valid),
+        .l2_valid(l2_peak_valid),
+        .l3_valid(l3_peak_valid),
+        .l4_valid(l4_peak_valid)
     );
 
 	laser_controller u_l1_controller (
+        .clk(clk),
+        .reset(reset),
+        .ramp_start(ramp_cycle_start),
+        .peak_valid(l1_peak_valid),
         .laser_id(l1_id),
         .laser_exists(l1_exists),
         .laser_locked(l1_locked),
@@ -155,6 +179,10 @@ module algorithm_top (
         .feedback(l1_feedback)
     );
 	laser_controller u_l2_controller (
+    .clk(clk),
+    .reset(reset),
+    .ramp_start(ramp_cycle_start),
+    .peak_valid(l2_peak_valid),
         .laser_id(l2_id),
         .laser_exists(l2_exists),
         .laser_locked(l2_locked),
@@ -167,6 +195,10 @@ module algorithm_top (
         .feedback(l2_feedback)
     );
 	laser_controller u_l3_controller (
+    .clk(clk),
+    .reset(reset),
+    .ramp_start(ramp_cycle_start),
+    .peak_valid(l3_peak_valid),
         .laser_id(l3_id),
         .laser_exists(l3_exists),
         .laser_locked(l3_locked),
@@ -179,6 +211,10 @@ module algorithm_top (
         .feedback(l3_feedback)
     );
 	laser_controller u_l4_controller (
+    .clk(clk),
+    .reset(reset),
+    .ramp_start(ramp_cycle_start),
+    .peak_valid(l4_peak_valid),
         .laser_id(l4_id),
         .laser_exists(l4_exists),
         .laser_locked(l4_locked),
@@ -196,18 +232,14 @@ module algorithm_top (
         .enable(enable),
         .reset(reset),
         .update_trigger(ramp_done),
-        // .l1_feedback_value(l1_feedback),
-        .l1_feedback_value(16'hFFFF),
-        .l1_feedback_enable(1),
-        // .l2_feedback_value(l2_feedback),
-        .l2_feedback_value(16'hFFFF),
-        .l2_feedback_enable(1),
-        // .l3_feedback_value(l3_feedback),
-        .l3_feedback_value(16'hFFFF),
-        .l3_feedback_enable(1),
-        // .l4_feedback_value(l4_feedback),
-        .l4_feedback_value(16'hFFFF),
-        .l4_feedback_enable(1),
+        .l1_feedback_value(l1_feedback),
+        .l1_feedback_enable(l1_exists && l1_locked),
+        .l2_feedback_value(l2_feedback),
+        .l2_feedback_enable(l2_exists && l2_locked),
+        .l3_feedback_value(l3_feedback),
+        .l3_feedback_enable(l3_exists && l3_locked),
+        .l4_feedback_value(l4_feedback),
+        .l4_feedback_enable(l4_exists && l4_locked),
 
         .dac_cs(feedback_dac_cs),
         .dac_mosi(feedback_dac_mosi),

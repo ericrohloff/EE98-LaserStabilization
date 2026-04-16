@@ -269,6 +269,7 @@ class Simulation:
             }
 
         for _ in range(self.steps):
+
             # 1) Advance all lasers' internal state.
             # Ref has drift_enabled = False, so it will still process transient/block timers
             # without accumulating slow drift.
