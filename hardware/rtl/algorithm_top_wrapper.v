@@ -69,7 +69,6 @@ module algorithm_top_wrapper (
     output wire requested, 
     output wire ramp_start, 
     output wire [15:0] counter, 
-    output wire [15:0] adc_sample_in,
 
 
     output wire debug_pin_0,

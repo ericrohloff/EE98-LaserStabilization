@@ -70,7 +70,6 @@ module algorithm_top (
     output wire requested, 
     output wire ramp_start, 
     output wire [15:0] counter, 
-    output wire [15:0] adc_sample_in,
 
     // Debug
     output wire debug_pin_0,
@@ -98,6 +97,8 @@ module algorithm_top (
     logic [15:0] current_ramp_pos;
     logic adc_sample_valid;
     assign debug_pin_0 = ramp_done;
+    assign counter = current_ramp_pos;
+    assign ramp_start = ramp_cycle_start;
 
 	ramp_dac_spi u_ramp_dac_spi (
         .clk(clk),
