@@ -96,6 +96,7 @@ module algorithm_top (
     logic ramp_cycle_start;
     logic [15:0] current_ramp_pos;
     logic adc_sample_valid;
+    assign debug_pin_1 = adc_sample_valid; // TODO give this a real port
     assign debug_pin_0 = ramp_done;
     assign counter = current_ramp_pos;
     assign ramp_start = ramp_cycle_start;
