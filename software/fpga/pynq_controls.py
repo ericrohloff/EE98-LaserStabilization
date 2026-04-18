@@ -222,6 +222,22 @@ class PYNQControls:
         self._logger.debug("pynq_controls.stop_cavity")
         return True
 
+    def get_data(self) -> list:
+        """Read a data payload from the board. Not yet implemented."""
+        # TODO: Implement the hardware read for the sample buffer.
+        #   - Decide whether the FPGA exposes the data via MMIO registers or
+        #     a DMA channel and update the overlay / bitfile accordingly.
+        #   - If MMIO: read each sample register in a loop using _read_reg()
+        #     and append to a list.
+        #   - If DMA: allocate a contiguous xlnk/pynq buffer, trigger the DMA
+        #     transfer, wait for completion, then convert to a Python list
+        #     (e.g. numpy array .tolist()).
+        #   - Define the sample count / data type (uint16, float32, etc.) and
+        #     document them as constants at the top of this file.
+        #   - Return the populated list so server.handle_get_data() can
+        #     serialise and forward it to the host.
+        raise NotImplementedError("pynq_controls.get_data: board-side data transfer not yet implemented")
+
     def read_laser_pid_param(self, laser_id: int, param_index: int) -> int:
         """Read PID parameter 1/2/3 for a given laser from MMIO."""
         if param_index not in (1, 2, 3):
