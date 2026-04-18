@@ -165,14 +165,16 @@ controls = PYNQControls(logger=logger)
 
 def handle_create_laser(laser_id: int, pid_param1: int, pid_param2: int, pid_param3: int, duration: int) -> bool:
     """Initialise a laser PID controller instance on the FPGA."""
-    success = controls.create_laser(laser_id, pid_param1, pid_param2, pid_param3, duration)
+    # duration field is repurposed as wavelength for CREATE_LASER packets.
+    wavelength = duration
+    success = controls.create_laser(laser_id, pid_param1, pid_param2, pid_param3, wavelength)
     logger.debug(
-        "handle_create_laser | laser_id=%d | p1=%d p2=%d p3=%d dur=%d",
+        "handle_create_laser | laser_id=%d | p1=%d p2=%d p3=%d wavelength=%d",
         laser_id,
         pid_param1,
         pid_param2,
         pid_param3,
-        duration,
+        wavelength,
     )
     return success
 

@@ -498,22 +498,25 @@ class PYNQController:
         pid_param1: int = 0,
         pid_param2: int = 0,
         pid_param3: int = 0,
-        duration: int = 0,
+        wavelength: int = 0,
     ) -> bool:
         """
         Register / initialise a new laser resource on the PYNQ board.
 
         Parameters
         ----------
-        laser_id : Identifier for the new laser.
+        laser_id  : Identifier for the new laser.
+        wavelength: Target set-wavelength (uint32). Packed into the duration
+                    field of the shared packet format, which is unused by
+                    CREATE_LASER on the server side.
         """
         self._logger.info(
-            "Creating laser | laser_id=%d | p1=%d p2=%d p3=%d dur=%d",
+            "Creating laser | laser_id=%d | p1=%d p2=%d p3=%d wavelength=%d",
             laser_id,
             pid_param1,
             pid_param2,
             pid_param3,
-            duration,
+            wavelength,
         )
         success = self._send(
             CommandType.CREATE_LASER,
@@ -524,7 +527,7 @@ class PYNQController:
             pid_param1=pid_param1,
             pid_param2=pid_param2,
             pid_param3=pid_param3,
-            duration=duration,
+            duration=wavelength,  # duration field repurposed as wavelength for CREATE_LASER
         )
         if success:
             self._laser_configured[laser_id] = True
