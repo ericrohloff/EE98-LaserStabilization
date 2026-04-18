@@ -8,7 +8,7 @@ module adc_bram_fsm (
     input  logic        bram_rst_a,
     input  logic        bram_en_a,
     input  logic [3:0]  bram_we_a,        // Typically 0 for our use case, but included for completeness
-    input  logic [14:0] bram_addr_a,      // 15-bit byte address (up to 32KB)
+    input  logic [15:0] bram_addr_a,      // 15-bit byte address (up to 32KB)
     input  logic [31:0] bram_wrdata_a,
     output logic [31:0] bram_rddata_a,
 
@@ -20,9 +20,10 @@ module adc_bram_fsm (
     
     // Control signals
     input  logic        requested,        // Assumed to come from a different domain (needs sync)
-    input  logic        ramp_start,       // Starts recording (rising edge)
-    input  logic [15:0] counter,          // Stops recording when it reaches 0
-    input  logic [15:0] adc_sample_in     // 16-bit data
+    input  logic        ramp_start,
+    input  logic [15:0] adc_sample_in,    // 16-bit data
+    input  logic        adc_sample_valid,
+    output logic        record_done
 );
 
     // ==========================================
@@ -51,6 +52,8 @@ module adc_bram_fsm (
     // 2. Edge detector for 'ramp_start' (assuming it's already synchronous to adc_clk)
     logic ramp_start_d;
     logic ramp_start_rising_edge;
+    logic adc_sample_valid_d;
+    logic adc_sample_valid_rising_edge;
     
     always_ff @(posedge adc_clk or negedge adc_rst_n) begin
         if (!adc_rst_n) begin
@@ -61,15 +64,48 @@ module adc_bram_fsm (
     end
     assign ramp_start_rising_edge = (ramp_start && !ramp_start_d);
 
+    // 3. Edge detector for sample valid in adc_clk domain
+    always_ff @(posedge adc_clk or negedge adc_rst_n) begin
+        if (!adc_rst_n) begin
+            adc_sample_valid_d <= 1'b0;
+        end else begin
+            adc_sample_valid_d <= adc_sample_valid;
+        end
+    end
+    assign adc_sample_valid_rising_edge = (adc_sample_valid && !adc_sample_valid_d);
+
+    // 4. Detect first BRAM read in bram clock domain and synchronize to adc_clk
+    logic bram_read_toggle;
+    logic [2:0] bram_read_sync_shift;
+    logic bram_read_pulse_adc;
+
+    always_ff @(posedge bram_clk_a or posedge bram_rst_a) begin
+        if (bram_rst_a) begin
+            bram_read_toggle <= 1'b0;
+        end else if (bram_en_a && (bram_we_a == 4'b0000)) begin
+            bram_read_toggle <= ~bram_read_toggle;
+        end
+    end
+
+    always_ff @(posedge adc_clk or negedge adc_rst_n) begin
+        if (!adc_rst_n) begin
+            bram_read_sync_shift <= 3'b000;
+        end else begin
+            bram_read_sync_shift <= {bram_read_sync_shift[1:0], bram_read_toggle};
+        end
+    end
+    assign bram_read_pulse_adc = bram_read_sync_shift[2] ^ bram_read_sync_shift[1];
+
 
     // ==========================================
     // State Machine (ADC Clock Domain)
     // ==========================================
-    typedef enum logic [1:0] {
-        ST_IDLE       = 2'b00,
-        ST_WAIT_RAMP  = 2'b01,
-        ST_RECORDING  = 2'b10,
-        ST_READ_MODE  = 2'b11
+    typedef enum logic [2:0] {
+        ST_IDLE        = 3'b000,
+        ST_WAIT_RAMP   = 3'b001,
+        ST_RECORDING   = 3'b010,
+        ST_WAIT_READ   = 3'b011,
+        ST_READ_MODE   = 3'b100
     } state_t;
 
     state_t current_state, next_state;
@@ -80,14 +116,23 @@ module adc_bram_fsm (
         if (!adc_rst_n) begin
             current_state <= ST_IDLE;
             write_addr    <= 12'd0;
+            record_done   <= 1'b0;
         end else begin
             current_state <= next_state;
+
+            if (current_state == ST_RECORDING && next_state == ST_WAIT_READ) begin
+                record_done <= 1'b1;
+            end else if (current_state == ST_WAIT_READ && next_state == ST_READ_MODE) begin
+                record_done <= 1'b0;
+            end else if (current_state == ST_READ_MODE && next_state == ST_WAIT_RAMP) begin
+                record_done <= 1'b0;
+            end
             
             // Manage Write Address
-            if (current_state == ST_WAIT_RAMP && ramp_start_rising_edge) begin
+            if (current_state == ST_WAIT_RAMP && ramp_start) begin
                 write_addr <= 12'd0; // Reset address at start of new capture
-            end else if (current_state == ST_RECORDING) begin
-                // Stop incrementing if we hit max memory size to prevent overflow
+            end else if (current_state == ST_RECORDING && adc_sample_valid_rising_edge) begin
+                // Stop incrementing at max depth; additional valid edges are ignored.
                 if (write_addr < 12'd4095) begin
                     write_addr <= write_addr + 1'b1;
                 end
@@ -107,20 +152,26 @@ module adc_bram_fsm (
             end
             
             ST_WAIT_RAMP: begin
-                if (ramp_start_rising_edge) begin
+                if (ramp_start) begin
                     next_state = ST_RECORDING;
                 end
             end
             
             ST_RECORDING: begin
-                if (counter == 16'd0 || write_addr == 12'd4095) begin
-                    // Stop if counter hits zero OR if we max out memory capacity
+                // Recording ends on the next ramp start event after entering RECORDING.
+                if (ramp_start_rising_edge) begin
+                    next_state = ST_WAIT_READ;
+                end
+            end
+
+            ST_WAIT_READ: begin
+                if (bram_read_pulse_adc) begin
                     next_state = ST_READ_MODE;
                 end
             end
             
             ST_READ_MODE: begin
-                // Wait here until a new request restarts the cycle
+                // Wait here until a new request restarts the cycle.
                 if (requested_rising_edge) begin
                     next_state = ST_WAIT_RAMP;
                 end
@@ -157,8 +208,8 @@ module adc_bram_fsm (
     // Port B: Write Domain (ADC Controller)
     // ------------------------------------------
     always_ff @(posedge adc_clk) begin
-        // Only write data when actively in the RECORDING state
-        if (current_state == ST_RECORDING) begin
+        // Only write on valid rising edges while actively recording.
+        if (current_state == ST_RECORDING && adc_sample_valid_rising_edge && write_addr < 12'd4095) begin
             // Zero padding the 16-bit ADC sample into the 32-bit slot
             ram_memory[write_addr] <= {16'd0, adc_sample_in};
         end

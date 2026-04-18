@@ -8,7 +8,7 @@ module adc_bram_wrapper (
     input  wire        bram_rst_a,
     input  wire        bram_en_a,
     input  wire [3:0]  bram_we_a,        // Typically 0 for our use case, but included for completeness
-    input  wire [14:0] bram_addr_a,      // 15-bit byte address (up to 32KB)
+    input  wire [15:0] bram_addr_a,      // 15-bit byte address (up to 32KB)
     input  wire [31:0] bram_wrdata_a,
     output wire [31:0] bram_rddata_a,
 
@@ -17,14 +17,16 @@ module adc_bram_wrapper (
     // ==========================================
     input  wire        adc_clk,
     input  wire        adc_rst_n,        // Active low reset for the ADC domain
-    
+
     // Control signals
     input  wire        requested,        // Assumed to come from a different domain (needs sync)
-    input  wire        ramp_start,       // Starts recording (rising edge)
-    input  wire [15:0] counter          // Stops recording when it reaches 0
+    input  wire        ramp_start,
+    input  wire [15:0] adc_sample_in,    // 16-bit data
+    input  wire        adc_sample_valid,
+    output wire        record_done
 );
 
-    adc_bram_fsm_test u_bram(
+    adc_bram_fsm u_bram (
         .bram_clk_a(bram_clk_a),
         .bram_rst_a(bram_rst_a),
         .bram_en_a(bram_en_a),
@@ -32,13 +34,13 @@ module adc_bram_wrapper (
         .bram_addr_a(bram_addr_a),
         .bram_wrdata_a(bram_wrdata_a),
         .bram_rddata_a(bram_rddata_a),
-
         .adc_clk(adc_clk),
         .adc_rst_n(adc_rst_n),
-    
         .requested(requested),
         .ramp_start(ramp_start),
-        .counter(counter)
+        .adc_sample_in(adc_sample_in),
+        .adc_sample_valid(adc_sample_valid),
+        .record_done(record_done)
     );
 
 endmodule
