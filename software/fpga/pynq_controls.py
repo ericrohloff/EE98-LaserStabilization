@@ -222,7 +222,7 @@ class PYNQControls:
         self._logger.debug("pynq_controls.stop_cavity")
         return True
 
-    def get_data(self) -> list:
+    def request_adc_scan(self) -> list:
         """Read a data payload from the board. Not yet implemented."""
         # TODO: Implement the hardware read for the sample buffer.
         #   - Decide whether the FPGA exposes the data via MMIO registers or
@@ -234,9 +234,9 @@ class PYNQControls:
         #     (e.g. numpy array .tolist()).
         #   - Define the sample count / data type (uint16, float32, etc.) and
         #     document them as constants at the top of this file.
-        #   - Return the populated list so server.handle_get_data() can
+        #   - Return the populated list so server.handle_request_adc_data() can
         #     serialise and forward it to the host.
-        raise NotImplementedError("pynq_controls.get_data: board-side data transfer not yet implemented")
+        raise NotImplementedError("pynq_controls.request_adc_data: board-side data transfer not yet implemented")
 
     def read_laser_pid_param(self, laser_id: int, param_index: int) -> int:
         """Read PID parameter 1/2/3 for a given laser from MMIO."""

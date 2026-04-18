@@ -57,7 +57,7 @@ CMD_START_CAVITY = 0x03
 CMD_STOP_CAVITY  = 0x04
 CMD_CREATE_LASER = 0x05
 CMD_REMOVE_LASER = 0x06
-CMD_GET_DATA     = 0x07
+CMD_REQUEST_ADC_SCAN = 0x07
 
 CMD_NAMES = {
     CMD_LOCK_LASER:   "LOCK_LASER",
@@ -66,7 +66,7 @@ CMD_NAMES = {
     CMD_STOP_CAVITY:  "STOP_CAVITY",
     CMD_CREATE_LASER: "CREATE_LASER",
     CMD_REMOVE_LASER: "REMOVE_LASER",
-    CMD_GET_DATA:     "GET_DATA",
+    CMD_REQUEST_ADC_SCAN: "REQUEST_ADC_SCAN",
 }
 
 
@@ -234,10 +234,10 @@ def handle_stop_cavity() -> bool:
     logger.debug("handle_stop_cavity")
     return success
 
-def handle_get_data() -> bool:
+def handle_request_adc_scan() -> bool:
     """Request a data payload from the board. Board-side transfer not yet implemented."""
     # TODO: Implement the data response path.
-    #   1. Call controls.get_data() once pynq_controls implements it.  That
+    #   1. Call controls.request_adc_data() once pynq_controls implements it.  That
     #      method should read the sample buffer from the FPGA (via MMIO or
     #      DMA) and return a list/array of values.
     #   2. Serialise the list into bytes (e.g. a 4-byte length prefix followed
@@ -246,9 +246,9 @@ def handle_get_data() -> bool:
     #      via a shared connection context) since handle_* functions currently
     #      have no access to the socket.
     #   3. Change the return type / signature as needed once the framing is
-    #      agreed with the host side (host_api.py get_data TODO).
+    #      agreed with the host side (host_api.py request_adc_data TODO).
     #   4. Remove this warning once the implementation is complete.
-    logger.warning("handle_get_data: not yet implemented — sending ACK_ERROR")
+    logger.warning("handle_request_adc_data: not yet implemented — sending ACK_ERROR")
     return False
 
 
@@ -343,8 +343,8 @@ def _dispatch(
         return handle_start_cavity(duration)
     elif cmd_id == CMD_STOP_CAVITY:
         return handle_stop_cavity()
-    elif cmd_id == CMD_GET_DATA:
-        return handle_get_data()
+    elif cmd_id == CMD_REQUEST_ADC_SCAN:
+        return handle_request_adc_scan()
     else:
         logger.warning("Unknown cmd_id=0x%02X — ignoring.", cmd_id)
         return False

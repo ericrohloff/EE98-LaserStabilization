@@ -121,7 +121,7 @@ class CommandType(str, Enum):
     STOP_CAVITY  = "STOP_CAVITY"
     CREATE_LASER = "CREATE_LASER"
     REMOVE_LASER = "REMOVE_LASER"
-    GET_DATA     = "GET_DATA"
+    REQUEST_ADC_DATA     = "REQUEST_ADC_DATA"
 
 # Byte value sent on the wire for each command
 _CMD_ID = {
@@ -131,7 +131,7 @@ _CMD_ID = {
     CommandType.STOP_CAVITY:  0x04,
     CommandType.CREATE_LASER: 0x05,
     CommandType.REMOVE_LASER: 0x06,
-    CommandType.GET_DATA:     0x07,
+    CommandType.REQUEST_ADC_DATA:     0x07,
 }
 
 
@@ -596,11 +596,11 @@ class PYNQController:
             self._system_on = False
         return success
 
-    def get_data(self) -> list:
+    def request_adc_data(self) -> list:
         """
         Request a data payload from the PYNQ board.
 
-        Sends a GET_DATA command and waits for the ACK.  The subsequent data
+        Sends a REQUEST_ADC_DATA command and waits for the ACK.  The subsequent data
         transfer from the board is not yet implemented — this method raises
         NotImplementedError after a successful ACK until the board-side data
         protocol is defined.
@@ -612,14 +612,14 @@ class PYNQController:
         """
         self._logger.info("Requesting data from board")
         success = self._send(
-            CommandType.GET_DATA,
+            CommandType.REQUEST_ADC_DATA,
             laser_id=0,
             laser_locked_flag=False,
             system_on_flag=self._system_on,
             laser_configured_flag=False,
         )
         if not success:
-            self._logger.error("GET_DATA command rejected by board")
+            self._logger.error("REQUEST_ADC_DATA command rejected by board")
             return []
         # TODO: Read the data payload sent by the board after the ACK.
         #   - Agree on a framing format with the server (e.g. a 4-byte
