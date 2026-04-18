@@ -152,7 +152,6 @@ algorithm_top u_algorithm_top (
     .requested(requested),
     .ramp_start(ramp_start),
     .counter(counter),
-    .adc_sample_in(adc_sample_in),
 
     .debug_pin_0(debug_pin_0),
     .debug_pin_1(debug_pin_1),
