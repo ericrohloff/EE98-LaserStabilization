@@ -66,6 +66,7 @@
         ///// Global flags
         output wire system_on,
         output wire system_locked,
+		output wire adc_sample_requested,
 		
 
 		// User ports ends
@@ -803,6 +804,7 @@
     ///// Global flags
     assign system_on = slv_reg25[0];
     assign system_locked = slv_reg25[1];
+	assign adc_sample_requested = slv_reg25[2];
 
 	// User logic ends
 

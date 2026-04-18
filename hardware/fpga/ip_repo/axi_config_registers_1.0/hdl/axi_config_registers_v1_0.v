@@ -65,6 +65,7 @@
         ///// Global flags
         output wire system_on,
         output wire system_locked,
+		output wire adc_sample_requested,
         
 		// User ports ends
 		// Do not modify the ports beyond this line
@@ -174,7 +175,8 @@
     
         // Global
         .system_on(system_on),
-        .system_locked(system_locked)
+        .system_locked(system_locked),
+		.adc_sample_requested(adc_sample_requested)
 	);
 
 	// Add user logic here
