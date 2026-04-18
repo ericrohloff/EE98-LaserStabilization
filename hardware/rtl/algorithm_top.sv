@@ -67,6 +67,11 @@ module algorithm_top (
 	output wire feedback_dac_sck,
 	output wire feedback_dac_cs,
 
+    output wire requested, 
+    output wire ramp_start, 
+    output wire [15:0] counter, 
+    output wire [15:0] adc_sample_in,
+
     // Debug
     output wire debug_pin_0,
     output wire debug_pin_1,

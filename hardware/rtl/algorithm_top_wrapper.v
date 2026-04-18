@@ -66,6 +66,11 @@ module algorithm_top_wrapper (
 	output wire feedback_dac_sck,
 	output wire feedback_dac_cs,
 
+    output wire requested, 
+    output wire ramp_start, 
+    output wire [15:0] counter, 
+    output wire [15:0] adc_sample_in,
+
 
     output wire debug_pin_0,
     output wire debug_pin_1,
@@ -144,6 +149,11 @@ algorithm_top u_algorithm_top (
     .feedback_dac_mosi(feedback_dac_mosi),
     .feedback_dac_sck(feedback_dac_sck),
     .feedback_dac_cs(feedback_dac_cs),
+
+    .requested(requested),
+    .ramp_start(ramp_start),
+    .counter(counter),
+    .adc_sample_in(adc_sample_in),
 
     .debug_pin_0(debug_pin_0),
     .debug_pin_1(debug_pin_1),
