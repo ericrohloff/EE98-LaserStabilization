@@ -24,7 +24,7 @@ module adc_bram_wrapper (
     input  wire [15:0] counter          // Stops recording when it reaches 0
 );
 
-    adc_bram_fsm u_bram(
+    adc_bram_fsm_test u_bram(
         .bram_clk_a(bram_clk_a),
         .bram_rst_a(bram_rst_a),
         .bram_en_a(bram_en_a),
