@@ -29,7 +29,16 @@ laser_and_flags byte:
     high nibble: laser_id
     low nibble : {0, laser_locked_flag, system_on_flag, laser_configured_flag}
 
-ACK: 1 byte — 0x00 = ok, 0x01 = error
+Response format  (8-byte header + optional payload)
+---------------------------------------------------------------------------
+ Offset  Size  Type     Field
+ ------  ----  -------  ----------------
+     0      1    uint8    response_version
+     1      1    uint8    response_id (echo of cmd_id)
+     2      1    uint8    status (0x00=ok, 0x01=error)
+     3      1    uint8    reserved
+     4      4    uint32   payload_length
+    8..N  var    bytes    payload
 """
 
 import logging
@@ -38,8 +47,12 @@ import socket
 import struct
 from pathlib import Path
 from datetime import datetime
+from typing import Tuple
 
-from software.board.pynq_controls import PYNQControls
+try:
+    from software.fpga.pynq_controls import PYNQControls
+except ModuleNotFoundError:  # pragma: no cover - board deployment path
+    from pynq_controls import PYNQControls
 
 # ---------------------------------------------------------------------------
 # Packet / protocol constants  (keep in sync with pynq_controller.py)
@@ -48,8 +61,13 @@ from software.board.pynq_controls import PYNQControls
 PACKET_FORMAT = "!BBIIII"
 PACKET_SIZE   = struct.calcsize(PACKET_FORMAT)   # 18 bytes
 
-ACK_OK    = bytes([0x00])
-ACK_ERROR = bytes([0x01])
+ACK_OK    = 0x00
+ACK_ERROR = 0x01
+
+RESPONSE_FORMAT = "!BBBBI"
+RESPONSE_SIZE = struct.calcsize(RESPONSE_FORMAT)
+RESPONSE_VERSION = 0x01
+MAX_RESPONSE_PAYLOAD = 8 * 1024 * 1024  # 8 MiB guardrail
 
 CMD_LOCK_LASER   = 0x01
 CMD_UNLOCK_LASER = 0x02
@@ -68,6 +86,31 @@ CMD_NAMES = {
     CMD_REMOVE_LASER: "REMOVE_LASER",
     CMD_REQUEST_ADC_SCAN: "REQUEST_ADC_SCAN",
 }
+
+
+def _serialize_response(cmd_id: int, status: int, payload: bytes = b"") -> bytes:
+    """Pack a universal response frame header + payload bytes."""
+    payload_len = len(payload)
+    if payload_len > MAX_RESPONSE_PAYLOAD:
+        logger.error(
+            "Response payload too large | cmd_id=0x%02X | len=%d > max=%d",
+            cmd_id,
+            payload_len,
+            MAX_RESPONSE_PAYLOAD,
+        )
+        status = ACK_ERROR
+        payload = b""
+        payload_len = 0
+
+    header = struct.pack(
+        RESPONSE_FORMAT,
+        RESPONSE_VERSION,
+        cmd_id,
+        status,
+        0x00,
+        payload_len,
+    )
+    return header + payload
 
 
 def _decode_laser_and_flags(laser_and_flags: int):
@@ -234,22 +277,30 @@ def handle_stop_cavity() -> bool:
     logger.debug("handle_stop_cavity")
     return success
 
-def handle_request_adc_scan() -> bool:
-    """Request a data payload from the board. Board-side transfer not yet implemented."""
-    # TODO: Implement the data response path.
-    #   1. Call controls.request_adc_data() once pynq_controls implements it.  That
-    #      method should read the sample buffer from the FPGA (via MMIO or
-    #      DMA) and return a list/array of values.
-    #   2. Serialise the list into bytes (e.g. a 4-byte length prefix followed
-    #      by the raw payload) and write them back to the caller's socket.
-    #      The socket reference will need to be threaded in as a parameter (or
-    #      via a shared connection context) since handle_* functions currently
-    #      have no access to the socket.
-    #   3. Change the return type / signature as needed once the framing is
-    #      agreed with the host side (host_api.py request_adc_data TODO).
-    #   4. Remove this warning once the implementation is complete.
-    logger.warning("handle_request_adc_data: not yet implemented — sending ACK_ERROR")
-    return False
+def handle_request_adc_scan() -> Tuple[bool, bytes]:
+    """Request ADC samples and return them as packed uint32 payload bytes."""
+    try:
+        samples = controls.request_adc_scan()
+    except Exception as exc:  # pragma: no cover - hardware path
+        logger.error("handle_request_adc_scan failed while reading samples: %s", exc)
+        return False, b""
+
+    if not samples:
+        logger.info("handle_request_adc_scan | no samples returned")
+        return True, b""
+
+    try:
+        payload = struct.pack(f"!{len(samples)}I", *(int(v) & 0xFFFFFFFF for v in samples))
+    except Exception as exc:
+        logger.error("handle_request_adc_scan failed while packing payload: %s", exc)
+        return False, b""
+
+    logger.info(
+        "handle_request_adc_scan | samples=%d | payload_len=%d",
+        len(samples),
+        len(payload),
+    )
+    return True, payload
 
 
 def _log_state_snapshot(laser_id: int) -> None:
@@ -320,12 +371,12 @@ def _dispatch(
     pid_param2: int,
     pid_param3: int,
     duration: int,
-) -> bool:
+) -> Tuple[bool, bytes]:
     """Route an unpacked command to the appropriate handler."""
     if cmd_id == CMD_CREATE_LASER:
-        return handle_create_laser(laser_id, pid_param1, pid_param2, pid_param3, duration)
+        return handle_create_laser(laser_id, pid_param1, pid_param2, pid_param3, duration), b""
     elif cmd_id == CMD_REMOVE_LASER:
-        return handle_remove_laser(laser_id)
+        return handle_remove_laser(laser_id), b""
     elif cmd_id == CMD_LOCK_LASER:
         return handle_lock_laser(
             laser_id,
@@ -336,18 +387,18 @@ def _dispatch(
             laser_locked_flag,
             system_on_flag,
             laser_configured_flag,
-        )
+        ), b""
     elif cmd_id == CMD_UNLOCK_LASER:
-        return handle_unlock_laser(laser_id, laser_configured_flag)
+        return handle_unlock_laser(laser_id, laser_configured_flag), b""
     elif cmd_id == CMD_START_CAVITY:
-        return handle_start_cavity(duration)
+        return handle_start_cavity(duration), b""
     elif cmd_id == CMD_STOP_CAVITY:
-        return handle_stop_cavity()
+        return handle_stop_cavity(), b""
     elif cmd_id == CMD_REQUEST_ADC_SCAN:
         return handle_request_adc_scan()
     else:
         logger.warning("Unknown cmd_id=0x%02X — ignoring.", cmd_id)
-        return False
+        return False, b""
 
 # ---------------------------------------------------------------------------
 # Connection handler
@@ -356,7 +407,7 @@ def _dispatch(
 def handle_connection(conn: socket.socket, addr) -> None:
     """
     Read packets from a connected host until the connection closes.
-    Sends ACK_OK / ACK_ERROR after each packet.
+    Sends a universal response frame after each packet.
     """
     logger.info("Client connected: %s:%d", *addr)
     conn.settimeout(TIMEOUT)
@@ -404,7 +455,7 @@ def handle_connection(conn: socket.socket, addr) -> None:
                 duration,
             )
 
-            success = _dispatch(
+            success, payload = _dispatch(
                 cmd_id,
                 laser_id,
                 laser_locked_flag,
@@ -420,9 +471,11 @@ def handle_connection(conn: socket.socket, addr) -> None:
                 _log_state_snapshot(laser_id)
 
             mem_locked, mem_system_on, mem_configured = _expected_flags(laser_id)
-            conn.sendall(ACK_OK if success else ACK_ERROR)
+            status = ACK_OK if success else ACK_ERROR
+            response = _serialize_response(cmd_id, status, payload if success else b"")
+            conn.sendall(response)
             logger.info(
-                "CMD %-14s | laser_id=%d | rx(lock=%d sys=%d cfg=%d) | mem(lock=%d sys=%d cfg=%d) | p1=%d p2=%d p3=%d dur=%d | ack=%s",
+                "CMD %-14s | laser_id=%d | rx(lock=%d sys=%d cfg=%d) | mem(lock=%d sys=%d cfg=%d) | p1=%d p2=%d p3=%d dur=%d | status=%s | payload_len=%d",
                 cmd_name,
                 laser_id,
                 1 if laser_locked_flag else 0,
@@ -436,6 +489,7 @@ def handle_connection(conn: socket.socket, addr) -> None:
                 pid_param3,
                 duration,
                 "OK" if success else "ERROR",
+                len(payload) if success else 0,
             )
 
     except socket.timeout:

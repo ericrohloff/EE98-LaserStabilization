@@ -49,10 +49,16 @@ Status nibble layout (low nibble):
     bit0: laser_configured_flag
 
 ---------------------------------------------------------------------------
-ACK format  (1 byte)
+Response format  (8-byte header + optional payload)
 ---------------------------------------------------------------------------
-  0x00  OK
-  0x01  Error
+ Offset  Size  Type     Field
+ ------  ----  -------  ----------------
+         0      1    uint8    response_version
+         1      1    uint8    response_id (echo of cmd_id)
+         2      1    uint8    status (0x00=ok, 0x01=error)
+         3      1    uint8    reserved
+         4      4    uint32   payload_length
+        8..N  var    bytes    payload
 """
 
 import logging
@@ -76,6 +82,11 @@ PACKET_SIZE   = struct.calcsize(PACKET_FORMAT)   # 18 bytes
 
 ACK_OK    = 0x00
 ACK_ERROR = 0x01
+
+RESPONSE_FORMAT = "!BBBBI"
+RESPONSE_SIZE = struct.calcsize(RESPONSE_FORMAT)
+RESPONSE_VERSION = 0x01
+MAX_RESPONSE_PAYLOAD = 8 * 1024 * 1024  # 8 MiB guardrail
 
 _NIBBLE_MAX = 0x0F
 _UINT32_MAX = 0xFFFFFFFF
@@ -145,8 +156,8 @@ class PYNQController:
     high-level methods for each supported command.
 
     Each command is serialised into an 18-byte binary packet and sent over
-    a persistent TCP connection.  After every send the controller reads a
-    1-byte ACK from the board (0x00 = ok, 0x01 = error).
+    a persistent TCP connection. After every send the controller reads one
+    framed response header with an optional payload.
 
     Parameters
     ----------
@@ -267,35 +278,86 @@ class PYNQController:
             _validate_uint32("duration", duration),
         )
 
-    def _recv_ack(self, command: CommandType) -> bool:
-        """
-        Read the 1-byte ACK from the board.
-        Returns True on ACK_OK (0x00), False on ACK_ERROR or timeout.
-        """
+    def _recv_exact(self, nbytes: int) -> Optional[bytes]:
+        """Read exactly nbytes from the socket or return None on failure."""
+        if self._socket is None:
+            return None
+
+        data = b""
         try:
-            raw = self._socket.recv(1)
-            if not raw:
-                self._logger.error("Connection closed by PYNQ board while waiting for ACK.")
-                self._connected = False
-                return False
-
-            ack = raw[0]
-            self._logger.debug("RX << ACK=0x%02X for %s", ack, command.value)
-
-            if ack == ACK_OK:
-                return True
-
-            self._logger.error("PYNQ board returned error ACK for %s.", command.value)
-            return False
-
+            while len(data) < nbytes:
+                chunk = self._socket.recv(nbytes - len(data))
+                if not chunk:
+                    self._logger.error("Connection closed by PYNQ board while receiving response.")
+                    self._connected = False
+                    return None
+                data += chunk
+            return data
         except socket.timeout:
-            self._logger.warning("Timed out waiting for ACK | command=%s", command.value)
-            return False
+            self._logger.warning("Timed out while receiving response bytes (wanted=%d).", nbytes)
+            return None
         except OSError as exc:
-            self._logger.error("ACK recv failed: %s", exc)
-            return False
+            self._logger.error("Response recv failed: %s", exc)
+            return None
 
-    def _send(
+    def _recv_response(self, command: CommandType) -> tuple[bool, bytes]:
+        """Read one universal response frame and return (success, payload)."""
+        header = self._recv_exact(RESPONSE_SIZE)
+        if header is None:
+            return False, b""
+
+        version, response_id, status, _reserved, payload_length = struct.unpack(RESPONSE_FORMAT, header)
+        expected_id = _CMD_ID[command]
+
+        self._logger.debug(
+            "RX << response_version=%d response_id=0x%02X status=0x%02X payload_len=%d for %s",
+            version,
+            response_id,
+            status,
+            payload_length,
+            command.value,
+        )
+
+        if version != RESPONSE_VERSION:
+            self._logger.error(
+                "Unexpected response version for %s: got %d expected %d",
+                command.value,
+                version,
+                RESPONSE_VERSION,
+            )
+            return False, b""
+
+        if response_id != expected_id:
+            self._logger.error(
+                "Response ID mismatch for %s: got 0x%02X expected 0x%02X",
+                command.value,
+                response_id,
+                expected_id,
+            )
+            return False, b""
+
+        if payload_length > MAX_RESPONSE_PAYLOAD:
+            self._logger.error(
+                "Response payload too large for %s: %d > %d",
+                command.value,
+                payload_length,
+                MAX_RESPONSE_PAYLOAD,
+            )
+            return False, b""
+
+        payload = b""
+        if payload_length > 0:
+            payload = self._recv_exact(payload_length)
+            if payload is None:
+                return False, b""
+
+        if status == ACK_OK:
+            return True, payload
+
+        self._logger.error("PYNQ board returned error status for %s.", command.value)
+        return False, payload
+
+    def _send_with_response(
         self,
         command: CommandType,
         laser_id: int = 0,
@@ -306,16 +368,13 @@ class PYNQController:
         pid_param2: int = 0,
         pid_param3: int = 0,
         duration: int = 0,
-    ) -> bool:
-        """
-        Build, transmit, and ACK-verify a command.
-        Returns True on success, False on any failure.
-        """
+    ) -> tuple[bool, bytes]:
+        """Build, transmit, and return (status, payload) from one framed response."""
         if not self._connected or self._socket is None:
             self._logger.error(
                 "Cannot send %s – not connected to PYNQ board.", command.value
             )
-            return False
+            return False, b""
 
         packet = self._build_packet(
             command=command,
@@ -347,11 +406,40 @@ class PYNQController:
         except (socket.timeout, OSError) as exc:
             self._logger.error("Failed to send %s: %s", command.value, exc)
             self._connected = False
-            return False
+            return False, b""
 
-        success = self._recv_ack(command)
+        success, payload = self._recv_response(command)
         if success:
-            self._logger.info("ACK OK | command=%s", command.value)
+            self._logger.info("RESP OK | command=%s | payload_len=%d", command.value, len(payload))
+        return success, payload
+
+    def _send(
+        self,
+        command: CommandType,
+        laser_id: int = 0,
+        laser_locked_flag: bool = False,
+        system_on_flag: bool = False,
+        laser_configured_flag: bool = False,
+        pid_param1: int = 0,
+        pid_param2: int = 0,
+        pid_param3: int = 0,
+        duration: int = 0,
+    ) -> bool:
+        """
+        Build, transmit, and ACK-verify a command.
+        Returns True on success, False on any failure.
+        """
+        success, _payload = self._send_with_response(
+            command=command,
+            laser_id=laser_id,
+            laser_locked_flag=laser_locked_flag,
+            system_on_flag=system_on_flag,
+            laser_configured_flag=laser_configured_flag,
+            pid_param1=pid_param1,
+            pid_param2=pid_param2,
+            pid_param3=pid_param3,
+            duration=duration,
+        )
         return success
 
     # ------------------------------------------------------------------
@@ -600,18 +688,16 @@ class PYNQController:
         """
         Request a data payload from the PYNQ board.
 
-        Sends a REQUEST_ADC_DATA command and waits for the ACK.  The subsequent data
-        transfer from the board is not yet implemented — this method raises
-        NotImplementedError after a successful ACK until the board-side data
-        protocol is defined.
+        Sends a REQUEST_ADC_DATA command and reads a universal response frame.
+        The payload is interpreted as packed network-order uint32 ADC samples.
 
         Returns
         -------
         list
-            Data list returned by the board (not yet implemented).
+            ADC sample values decoded from payload bytes.
         """
         self._logger.info("Requesting data from board")
-        success = self._send(
+        success, payload = self._send_with_response(
             CommandType.REQUEST_ADC_DATA,
             laser_id=0,
             laser_locked_flag=False,
@@ -621,15 +707,22 @@ class PYNQController:
         if not success:
             self._logger.error("REQUEST_ADC_DATA command rejected by board")
             return []
-        # TODO: Read the data payload sent by the board after the ACK.
-        #   - Agree on a framing format with the server (e.g. a 4-byte
-        #     little-endian length prefix followed by that many bytes of
-        #     payload, or a fixed-size struct if the data count is constant).
-        #   - Call self._sock.recv() in a loop until the full payload is read.
-        #   - Unpack the bytes into a Python list (e.g. via struct.unpack or
-        #     numpy.frombuffer depending on the data type).
-        #   - Return the list instead of raising here.
-        raise NotImplementedError("Board-side data transfer not yet implemented")
+
+        if len(payload) % 4 != 0:
+            self._logger.error(
+                "Malformed ADC payload length=%d (not divisible by 4)",
+                len(payload),
+            )
+            return []
+
+        sample_count = len(payload) // 4
+        if sample_count == 0:
+            self._logger.warning("REQUEST_ADC_DATA returned empty payload")
+            return []
+
+        samples = list(struct.unpack(f"!{sample_count}I", payload))
+        self._logger.info("Received ADC payload | samples=%d", sample_count)
+        return samples
 
     # ------------------------------------------------------------------
     # Context-manager support
