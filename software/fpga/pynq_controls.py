@@ -18,6 +18,7 @@ from typing import Optional
 
 from pynq import Overlay
 import numpy as np
+import time
 
 
 LASER_SLOT_COUNT = 5
@@ -223,20 +224,25 @@ class PYNQControls:
         return True
 
     def request_adc_scan(self) -> list:
-        """Read a data payload from the board. Not yet implemented."""
-        # TODO: Implement the hardware read for the sample buffer.
-        #   - Decide whether the FPGA exposes the data via MMIO registers or
-        #     a DMA channel and update the overlay / bitfile accordingly.
-        #   - If MMIO: read each sample register in a loop using _read_reg()
-        #     and append to a list.
-        #   - If DMA: allocate a contiguous xlnk/pynq buffer, trigger the DMA
-        #     transfer, wait for completion, then convert to a Python list
-        #     (e.g. numpy array .tolist()).
-        #   - Define the sample count / data type (uint16, float32, etc.) and
-        #     document them as constants at the top of this file.
-        #   - Return the populated list so server.handle_request_adc_data() can
-        #     serialise and forward it to the host.
-        raise NotImplementedError("pynq_controls.request_adc_data: board-side data transfer not yet implemented")
+        """Requests a list of adc samples making up an entire scan."""
+        # TODO: Calculate number of samples based on cavity scan config values
+        NUM_SAMPLES = 500
+
+        flags = self._read_reg(GLOBAL_FLAGS_REG_ADDR)
+        flags = flags | 0b100
+        self._write_reg(GLOBAL_FLAGS_REG_ADDR, flags)
+
+        # TODO: better way to wait for scan to be complete
+        time.sleep(0.05)
+        values = []
+        for i in range(0, NUM_SAMPLES):
+            values.append(self._overlay.axi_bram_ctrl_0.read(i << 2))
+
+        flags = self._read_reg(GLOBAL_FLAGS_REG_ADDR)
+        flags = flags & (~0b100)
+        self._write_reg(GLOBAL_FLAGS_REG_ADDR, flags)
+
+        return values
 
     def read_laser_pid_param(self, laser_id: int, param_index: int) -> int:
         """Read PID parameter 1/2/3 for a given laser from MMIO."""
