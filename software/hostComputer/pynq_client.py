@@ -1,72 +1,16 @@
 """
-pynq_controller.py
-------------------
-Host-side controller for communicating with a PYNQ FPGA board over TCP sockets.
-Uses a fixed-width binary protocol to minimise processing on the PYNQ side.
+pynq_client.py
+--------------
+Backend client for communicating with a PYNQ FPGA board over TCP sockets.
 
-Usage:
-    controller = PYNQController(server_ip="192.168.1.100", server_port=5000)
-    controller.connect()
-    controller.create_laser(laser_id=1)
-    controller.lock_laser(laser_id=1, pid_param1=1550)
-    controller.start_cavity(duration=10)
-    controller.disconnect()
-
-    # Or as a context manager:
-    with PYNQController(server_ip="192.168.1.100", server_port=5000) as ctrl:
-        ctrl.create_laser(laser_id=1)
-        ctrl.lock_laser(laser_id=1, pid_param1=1550)
-
-Test plan for feedback-loop validation:
-    1. Controller sends create/lock/start commands.
-    2. Server receives packets and dispatches to PYNQControls.
-    3. PYNQControls updates MMIO and local state.
-    4. Server reads back laser state / flags from PYNQControls.
-    5. Controller verifies ACKs and the server-side readback snapshot.
-
----------------------------------------------------------------------------
-Binary packet format  (18 bytes, big-endian / network byte order)
----------------------------------------------------------------------------
-
- Offset  Size  Type     Field           Description
- ------  ----  -------  -------------   ------------------------------------
-     0      1    uint8    cmd_id          Command identifier (see _CMD_ID)
-    1      1    uint8    laser_and_flags [7:4]=laser_id, [2]=laser_locked, [1]=system_on, [0]=laser_configured
-     2      4    uint32   pid_param1      PID parameter 1
-     6      4    uint32   pid_param2      PID parameter 2
-    10      4    uint32   pid_param3      PID parameter 3
-    14      4    uint32   duration        Duration field
- ------
-    18 bytes total
-
-PYNQ-side (Python):
-        CMD_ID, LASER_FLAGS, P1, P2, P3, DURATION = struct.unpack('!BBIIII', data)
-
-Status nibble layout (low nibble):
-    bit3: 0 (reserved)
-    bit2: laser_locked_flag
-    bit1: system_on_flag
-    bit0: laser_configured_flag
-
----------------------------------------------------------------------------
-Response format  (8-byte header + optional payload)
----------------------------------------------------------------------------
- Offset  Size  Type     Field
- ------  ----  -------  ----------------
-         0      1    uint8    response_version
-         1      1    uint8    response_id (echo of cmd_id)
-         2      1    uint8    status (0x00=ok, 0x01=error)
-         3      1    uint8    reserved
-         4      4    uint32   payload_length
-        8..N  var    bytes    payload
+This module contains only protocol, transport, and high-level command methods.
+It intentionally has no CLI concerns so additional frontends (GUI, web API,
+schedulers, tests) can reuse the same backend.
 """
 
 import logging
 import socket
 import struct
-import time
-import argparse
-import shlex
 from pathlib import Path
 from datetime import datetime, timedelta
 from enum import Enum
@@ -78,9 +22,9 @@ from typing import Optional
 # ---------------------------------------------------------------------------
 
 PACKET_FORMAT = "!BBIIII"        # uint8, uint8, uint32, uint32, uint32, uint32
-PACKET_SIZE   = struct.calcsize(PACKET_FORMAT)   # 18 bytes
+PACKET_SIZE = struct.calcsize(PACKET_FORMAT)   # 18 bytes
 
-ACK_OK    = 0x00
+ACK_OK = 0x00
 ACK_ERROR = 0x01
 
 RESPONSE_FORMAT = "!BBBBI"
@@ -125,46 +69,36 @@ def _pack_laser_and_flags(
 # Command definitions
 # ---------------------------------------------------------------------------
 
+
 class CommandType(str, Enum):
-    LOCK_LASER   = "LOCK_LASER"
+    LOCK_LASER = "LOCK_LASER"
     UNLOCK_LASER = "UNLOCK_LASER"
     START_CAVITY = "START_CAVITY"
-    STOP_CAVITY  = "STOP_CAVITY"
+    STOP_CAVITY = "STOP_CAVITY"
     CREATE_LASER = "CREATE_LASER"
     REMOVE_LASER = "REMOVE_LASER"
-    REQUEST_ADC_DATA     = "REQUEST_ADC_DATA"
+    REQUEST_ADC_DATA = "REQUEST_ADC_DATA"
+
 
 # Byte value sent on the wire for each command
 _CMD_ID = {
-    CommandType.LOCK_LASER:   0x01,
+    CommandType.LOCK_LASER: 0x01,
     CommandType.UNLOCK_LASER: 0x02,
     CommandType.START_CAVITY: 0x03,
-    CommandType.STOP_CAVITY:  0x04,
+    CommandType.STOP_CAVITY: 0x04,
     CommandType.CREATE_LASER: 0x05,
     CommandType.REMOVE_LASER: 0x06,
-    CommandType.REQUEST_ADC_DATA:     0x07,
+    CommandType.REQUEST_ADC_DATA: 0x07,
 }
 
 
-# ---------------------------------------------------------------------------
-# Controller
-# ---------------------------------------------------------------------------
-
 class PYNQController:
     """
-    Manages a TCP socket connection to a PYNQ FPGA board and exposes
-    high-level methods for each supported command.
+    Backend transport/controller for PYNQ command protocol.
 
-    Each command is serialised into an 18-byte binary packet and sent over
+    Each command is serialized into an 18-byte binary packet and sent over
     a persistent TCP connection. After every send the controller reads one
     framed response header with an optional payload.
-
-    Parameters
-    ----------
-    server_ip   : IP address of the PYNQ board.
-    server_port : TCP port the PYNQ board is listening on.
-    log_file    : Path to the log file. Defaults to 'pynq_session_<timestamp>.log'.
-    timeout     : Socket timeout in seconds (default: 300.0).
     """
 
     def __init__(
@@ -174,35 +108,34 @@ class PYNQController:
         log_file: Optional[str] = None,
         timeout: float = 300.0,
     ) -> None:
-        self.server_ip   = server_ip
+        self.server_ip = server_ip
         self.server_port = server_port
-        self.timeout     = timeout
+        self.timeout = timeout
         self._socket: Optional[socket.socket] = None
-        self._connected  = False
+        self._connected = False
         self._laser_configured = {}
         self._laser_locked = {}
         self._system_on = False
 
         if log_file is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            log_file  = f"pynq_session_{timestamp}.log"
+            log_file = f"pynq_session_{timestamp}.log"
 
         # Always route controller logs into logs/.
-        log_dir  = Path("logs")
+        log_dir = Path("logs")
         log_file = str(log_dir / Path(log_file).name)
 
         self._rotate_old_logs(log_dir)
 
         self.log_file = log_file
-        self._logger  = self._setup_logger(log_file)
+        self._logger = self._setup_logger(log_file)
         self._logger.info(
             "PYNQController initialised | target=%s:%d | packet_size=%dB | log=%s",
-            server_ip, server_port, PACKET_SIZE, log_file,
+            server_ip,
+            server_port,
+            PACKET_SIZE,
+            log_file,
         )
-
-    # ------------------------------------------------------------------
-    # Internal helpers
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _rotate_old_logs(log_dir: Path, max_age_days: int = 1) -> None:
@@ -211,7 +144,6 @@ class PYNQController:
         archive_dir = log_dir / "archive"
 
         for log_path in log_dir.glob("pynq_session_*.log"):
-            # Use file modification time to determine age.
             mtime = datetime.fromtimestamp(log_path.stat().st_mtime)
             if mtime < cutoff:
                 archive_dir.mkdir(parents=True, exist_ok=True)
@@ -254,18 +186,10 @@ class PYNQController:
         pid_param3: int = 0,
         duration: int = 0,
     ) -> bytes:
-        """
-        Pack a command into a fixed-width binary packet.
-
-        Packet fields:
-          byte0: cmd_id
-                    byte1: [7:4]=laser_id, [3:0]={0, laser_locked_flag, system_on_flag, laser_configured_flag}
-          byte2..17: pid_param1, pid_param2, pid_param3, duration
-        """
         laser_flags = _pack_laser_and_flags(
             laser_id=laser_id,
             laser_locked_flag=laser_locked_flag,
-                        system_on_flag=system_on_flag,
+            system_on_flag=system_on_flag,
             laser_configured_flag=laser_configured_flag,
         )
         return struct.pack(
@@ -372,7 +296,7 @@ class PYNQController:
         """Build, transmit, and return (status, payload) from one framed response."""
         if not self._connected or self._socket is None:
             self._logger.error(
-                "Cannot send %s – not connected to PYNQ board.", command.value
+                "Cannot send %s - not connected to PYNQ board.", command.value
             )
             return False, b""
 
@@ -425,10 +349,7 @@ class PYNQController:
         pid_param3: int = 0,
         duration: int = 0,
     ) -> bool:
-        """
-        Build, transmit, and ACK-verify a command.
-        Returns True on success, False on any failure.
-        """
+        """Build, transmit, and validate one command response."""
         success, _payload = self._send_with_response(
             command=command,
             laser_id=laser_id,
@@ -442,25 +363,18 @@ class PYNQController:
         )
         return success
 
-    # ------------------------------------------------------------------
-    # Connection management
-    # ------------------------------------------------------------------
-
     def connect(self) -> bool:
-        """
-        Open a TCP connection to the PYNQ board.
-        Returns True if successful, False otherwise.
-        """
+        """Open a TCP connection to the PYNQ board."""
         if self._connected:
             self._logger.warning("Already connected to %s:%d.", self.server_ip, self.server_port)
             return True
 
-        self._logger.info("Connecting to PYNQ board at %s:%d …", self.server_ip, self.server_port)
+        self._logger.info("Connecting to PYNQ board at %s:%d ...", self.server_ip, self.server_port)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(self.timeout)
             sock.connect((self.server_ip, self.server_port))
-            self._socket    = sock
+            self._socket = sock
             self._connected = True
             self._logger.info("Connected successfully.")
             return True
@@ -477,17 +391,13 @@ class PYNQController:
             except OSError:
                 pass
             finally:
-                self._socket    = None
+                self._socket = None
                 self._connected = False
                 self._logger.info("Disconnected from PYNQ board.")
 
     @property
     def is_connected(self) -> bool:
         return self._connected
-
-    # ------------------------------------------------------------------
-    # Laser commands
-    # ------------------------------------------------------------------
 
     def _laser_is_configured(self, laser_id: int) -> bool:
         return bool(self._laser_configured.get(laser_id, False))
@@ -528,17 +438,6 @@ class PYNQController:
         pid_param3: int = 0,
         duration: int = 0,
     ) -> bool:
-        """
-        Lock a laser using packetized PID parameter fields.
-
-        Parameters
-        ----------
-        laser_id    : Laser ID (nibble field in packet).
-        pid_param1  : PID parameter 1 (uint32).
-        pid_param2  : PID parameter 2 (uint32).
-        pid_param3  : PID parameter 3 (uint32).
-        duration    : Duration field (uint32).
-        """
         self._logger.info(
             "Locking laser | laser_id=%d | p1=%d p2=%d p3=%d dur=%d",
             laser_id,
@@ -563,13 +462,6 @@ class PYNQController:
         return success
 
     def unlock_laser(self, laser_id: int) -> bool:
-        """
-        Unlock a previously locked laser.
-
-        Parameters
-        ----------
-        laser_id : Laser ID nibble to unlock.
-        """
         self._logger.info("Unlocking laser | laser_id=%d", laser_id)
         success = self._send(
             CommandType.UNLOCK_LASER,
@@ -590,16 +482,6 @@ class PYNQController:
         pid_param3: int = 0,
         wavelength: int = 0,
     ) -> bool:
-        """
-        Register / initialise a new laser resource on the PYNQ board.
-
-        Parameters
-        ----------
-        laser_id  : Identifier for the new laser.
-        wavelength: Target set-wavelength (uint32). Packed into the duration
-                    field of the shared packet format, which is unused by
-                    CREATE_LASER on the server side.
-        """
         self._logger.info(
             "Creating laser | laser_id=%d | p1=%d p2=%d p3=%d wavelength=%d",
             laser_id,
@@ -617,7 +499,7 @@ class PYNQController:
             pid_param1=pid_param1,
             pid_param2=pid_param2,
             pid_param3=pid_param3,
-            duration=wavelength,  # duration field repurposed as wavelength for CREATE_LASER
+            duration=wavelength,
         )
         if success:
             self._laser_configured[laser_id] = True
@@ -625,13 +507,6 @@ class PYNQController:
         return success
 
     def remove_laser(self, laser_id: int) -> bool:
-        """
-        Remove / de-register a laser resource from the PYNQ board.
-
-        Parameters
-        ----------
-        laser_id : Identifier of the laser to remove.
-        """
         self._logger.info("Removing laser | laser_id=%d", laser_id)
         success = self._send(
             CommandType.REMOVE_LASER,
@@ -645,18 +520,7 @@ class PYNQController:
             self._laser_locked[laser_id] = False
         return success
 
-    # ------------------------------------------------------------------
-    # Cavity commands
-    # ------------------------------------------------------------------
-
     def start_cavity(self, duration: int) -> bool:
-        """
-        Start the optical cavity scan for a specified duration.
-
-        Parameters
-        ----------
-        duration : Duration field (uint32).
-        """
         self._logger.info("Starting cavity | duration=%d", duration)
         success = self._send(
             CommandType.START_CAVITY,
@@ -671,7 +535,6 @@ class PYNQController:
         return success
 
     def stop_cavity(self) -> bool:
-        """Immediately stop the optical cavity scan."""
         self._logger.info("Stopping cavity")
         success = self._send(
             CommandType.STOP_CAVITY,
@@ -684,18 +547,8 @@ class PYNQController:
             self._system_on = False
         return success
 
-    def request_adc_data(self) -> list:
-        """
-        Request a data payload from the PYNQ board.
-
-        Sends a REQUEST_ADC_DATA command and reads a universal response frame.
-        The payload is interpreted as packed network-order uint32 ADC samples.
-
-        Returns
-        -------
-        list
-            ADC sample values decoded from payload bytes.
-        """
+    def request_adc_data(self) -> list[int]:
+        """Request ADC payload and decode network-order uint32 samples."""
         self._logger.info("Requesting data from board")
         success, payload = self._send_with_response(
             CommandType.REQUEST_ADC_DATA,
@@ -724,20 +577,12 @@ class PYNQController:
         self._logger.info("Received ADC payload | samples=%d", sample_count)
         return samples
 
-    # ------------------------------------------------------------------
-    # Context-manager support
-    # ------------------------------------------------------------------
-
     def __enter__(self) -> "PYNQController":
         self.connect()
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.disconnect()
-
-    # ------------------------------------------------------------------
-    # String representation
-    # ------------------------------------------------------------------
 
     def __repr__(self) -> str:
         status = "connected" if self._connected else "disconnected"
@@ -748,7 +593,6 @@ class PYNQController:
 
     @staticmethod
     def feedback_loop_test_plan() -> list[str]:
-        """Return the intended end-to-end controller/server/controls validation steps."""
         return [
             "Connect controller to server and confirm TCP session opens.",
             "Create laser 1 and laser 2, then confirm ACKs from server and state snapshots on the board.",
@@ -758,244 +602,14 @@ class PYNQController:
         ]
 
 
-def _parse_cli_value(raw: str):
-    lower = raw.lower()
-    if lower == "true":
-        return True
-    if lower == "false":
-        return False
-    try:
-        return int(raw, 0)
-    except ValueError:
-        return raw
-
-
-def _parse_cli_command(spec: str):
-    """Parse one CLI command spec into method name, args, and kwargs.
-
-    Examples:
-        create_laser laser_id=2 pid_param1=120 pid_param2=12 pid_param3=2
-        stop_cavity
-        unlock_laser 2
-    """
-    parts = shlex.split(spec)
-    if not parts:
-        raise ValueError("Command spec cannot be empty.")
-
-    method_name = parts[0]
-    args = []
-    kwargs = {}
-
-    for token in parts[1:]:
-        if "=" in token:
-            key, value = token.split("=", 1)
-            kwargs[key] = _parse_cli_value(value)
-        else:
-            args.append(_parse_cli_value(token))
-
-    return method_name, args, kwargs
-
-
-def _run_interactive_commands(ctrl: "PYNQController") -> bool:
-    """Run user-entered API commands until the user exits interactive mode."""
-    print("Interactive command mode enabled.")
-    print("Enter one API call per line (example: create_laser laser_id=2 pid_param1=120 pid_param2=12 pid_param3=2)")
-    print("Type 'help' for available calls. Type 'exit' or 'quit' to stop.")
-
-    available = [
-        "create_laser",
-        "remove_laser",
-        "lock_laser",
-        "unlock_laser",
-        "start_cavity",
-        "stop_cavity",
-        "send_command",
-    ]
-
-    all_ok = True
-    while True:
-        raw = input("pynq> ").strip()
-        if not raw:
-            continue
-        if raw.lower() in {"exit", "quit"}:
-            break
-        if raw.lower() == "help":
-            print("Available methods:")
-            for name in available:
-                print(f"- {name}")
-            continue
-
-        try:
-            method_name, args, kwargs = _parse_cli_command(raw)
-            method = getattr(ctrl, method_name, None)
-            if method is None or not callable(method):
-                raise ValueError(f"Unknown API method: {method_name}")
-
-            result = method(*args, **kwargs)
-            ok = bool(result) if isinstance(result, bool) else True
-            all_ok = all_ok and ok
-            print(f"{method_name} -> {result}")
-            if not ctrl.is_connected:
-                print("Connection to server lost. Exiting interactive mode.")
-                return False
-            if isinstance(result, bool) and not result:
-                print("Command failed. Exiting interactive mode.")
-                return False
-        except Exception as exc:
-            all_ok = False
-            print(f"Command failed: {exc}")
-            if not ctrl.is_connected:
-                print("Connection to server lost. Exiting interactive mode.")
-                return False
-
-    return all_ok
-
-
-def _run_cli_commands(ctrl: "PYNQController", commands: list[str]) -> bool:
-    """Run a list of user-provided API command specs."""
-    all_ok = True
-    for idx, spec in enumerate(commands, start=1):
-        method_name, args, kwargs = _parse_cli_command(spec)
-        method = getattr(ctrl, method_name, None)
-        if method is None or not callable(method):
-            raise ValueError(f"Unknown API method in --command #{idx}: {method_name}")
-
-        print(f"> {spec}")
-        result = method(*args, **kwargs)
-        ok = bool(result) if isinstance(result, bool) else True
-        all_ok = all_ok and ok
-        print(f"  {result}")
-        if not ctrl.is_connected:
-            print("Connection to server lost. Exiting.")
-            return False
-        if isinstance(result, bool) and not result:
-            print("Command failed. Exiting.")
-            return False
-    return all_ok
-
-
-def _load_commands_from_file(path: str) -> list[str]:
-    """Load command specs from a text file.
-
-    File format:
-      - One command spec per line.
-      - Blank lines are ignored.
-      - Lines starting with '#' are treated as comments.
-    """
-    commands: list[str] = []
-    with open(path, "r", encoding="utf-8") as handle:
-        for line in handle:
-            spec = line.strip()
-            if not spec or spec.startswith("#"):
-                continue
-            commands.append(spec)
-    return commands
-
-
-def _run_default_feedback_demo(ctrl: "PYNQController") -> None:
-    """Run the original step-by-step feedback-loop demo."""
-    print("Feedback-loop test plan:")
-    for step in PYNQController.feedback_loop_test_plan():
-        print(f"- {step}")
-    print()
-
-    def run_step(label: str, action) -> bool:
-        print(f"> {label}")
-        ok = action()
-        print(f"  {'OK' if ok else 'FAILED'}")
-        return ok
-
-    if run_step("create_laser(laser_id=1, p1=100, p2=10, p3=1)", lambda: ctrl.create_laser(laser_id=1, pid_param1=100, pid_param2=10, pid_param3=1)):
-        if not run_step("create_laser(laser_id=2, p1=120, p2=12, p3=2)", lambda: ctrl.create_laser(laser_id=2, pid_param1=120, pid_param2=12, pid_param3=2)):
-            raise SystemExit(1)
-    else:
-        raise SystemExit(1)
-
-    if not run_step("lock_laser(laser_id=1, p1=1500, p2=20, p3=3, duration=15)", lambda: ctrl.lock_laser(laser_id=1, pid_param1=1500, pid_param2=20, pid_param3=3, duration=15)):
-        raise SystemExit(1)
-    if not run_step("start_cavity(duration=30)", lambda: ctrl.start_cavity(duration=30)):
-        raise SystemExit(1)
-
-    time.sleep(1)
-
-    if not run_step("lock_laser(laser_id=2, p1=1550, p2=25, p3=2, duration=10)", lambda: ctrl.lock_laser(laser_id=2, pid_param1=1550, pid_param2=25, pid_param3=2, duration=10)):
-        raise SystemExit(1)
-    if not run_step("stop_cavity()", lambda: ctrl.stop_cavity()):
-        raise SystemExit(1)
-
-    if not run_step("unlock_laser(laser_id=1)", lambda: ctrl.unlock_laser(laser_id=1)):
-        raise SystemExit(1)
-    if not run_step("unlock_laser(laser_id=2)", lambda: ctrl.unlock_laser(laser_id=2)):
-        raise SystemExit(1)
-    if not run_step("remove_laser(laser_id=1)", lambda: ctrl.remove_laser(laser_id=1)):
-        raise SystemExit(1)
-    if not run_step("remove_laser(laser_id=2)", lambda: ctrl.remove_laser(laser_id=2)):
-        raise SystemExit(1)
-
-
-def _build_cli_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="PYNQ laser controller CLI",
-    )
-    parser.add_argument("--ip", default="192.168.3.1", help="PYNQ server IP address")
-    parser.add_argument("--port", type=int, default=5000, help="PYNQ server TCP port")
-    parser.add_argument(
-        "--timeout",
-        type=float,
-        default=300.0,
-        help="Socket timeout in seconds (default: 300)",
-    )
-    parser.add_argument(
-        "-c",
-        "--command",
-        action="append",
-        default=[],
-        help=(
-            "Controller API command to run. Can be provided multiple times. "
-            "Example: --command \"create_laser laser_id=2 pid_param1=120 pid_param2=12 pid_param3=2\""
-        ),
-    )
-    parser.add_argument(
-        "--interactive",
-        action="store_true",
-        help="Run an interactive prompt to enter API commands",
-    )
-    parser.add_argument(
-        "--commands-file",
-        action="append",
-        default=[],
-        help=(
-            "Path to a text file containing API commands, one per line. "
-            "Can be provided multiple times."
-        ),
-    )
-    return parser
-
-
-# ---------------------------------------------------------------------------
-# Quick smoke-test / example usage (runs when executed directly)
-# ---------------------------------------------------------------------------
-
-if __name__ == "__main__":
-    args = _build_cli_parser().parse_args()
-
-    with PYNQController(server_ip=args.ip, server_port=args.port, timeout=args.timeout) as ctrl:
-        if not ctrl.is_connected:
-            print("Could not reach PYNQ board – check IP/port and board status.")
-            raise SystemExit(1)
-
-        combined_commands: list[str] = []
-        for file_path in args.commands_file:
-            combined_commands.extend(_load_commands_from_file(file_path))
-        combined_commands.extend(args.command)
-
-        if combined_commands:
-            ok = _run_cli_commands(ctrl, combined_commands)
-            raise SystemExit(0 if ok else 1)
-
-        if args.interactive:
-            ok = _run_interactive_commands(ctrl)
-            raise SystemExit(0 if ok else 1)
-
-        # Backward-compatible default path remains the test demo.
-        _run_default_feedback_demo(ctrl)
+__all__ = [
+    "PYNQController",
+    "CommandType",
+    "PACKET_FORMAT",
+    "PACKET_SIZE",
+    "RESPONSE_FORMAT",
+    "RESPONSE_SIZE",
+    "RESPONSE_VERSION",
+    "ACK_OK",
+    "ACK_ERROR",
+]
