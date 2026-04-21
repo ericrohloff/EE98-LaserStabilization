@@ -169,6 +169,11 @@ module algorithm_top (
         .l4_valid(l4_peak_valid)
     );
 
+    assign l1_detected_wavelength = l1_peak_position;
+    assign l2_detected_wavelength = l2_peak_position;
+    assign l3_detected_wavelength = l3_peak_position;
+    assign l4_detected_wavelength = l4_peak_position;
+
 	laser_controller u_l1_controller (
         .clk(clk),
         .reset(reset),
