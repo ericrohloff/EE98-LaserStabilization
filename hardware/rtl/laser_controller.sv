@@ -26,7 +26,7 @@ module laser_controller (
 
     // Use logic/wire for continuous assignments
     assign current_error = set_wavelength - current_wavelength;
-    assign feedback = ctrl_signal[31:16];
+    assign feedback = ctrl_signal[31:16] + 16'h32768;
 
     always_ff @(posedge clk or posedge reset) begin
         if (reset) begin
