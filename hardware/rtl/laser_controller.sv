@@ -13,35 +13,39 @@ module laser_controller (
     input logic [15:0] pid_d,
     input logic [15:0] set_wavelength,
     input logic [15:0] current_wavelength,
-
     input logic [15:0] ref_wavelength,
 
     output logic [15:0] feedback
 );
 
-reg [15:0] prev_error = 16'h0000;
-reg [15:0] integral = 16'h0000;
-reg [15:0] derivative = 16'h0000;
-reg [15:0] current_error;
+    logic [31:0] prev_error;
+    logic [31:0] integral;
+    logic [31:0] derivative;
+    logic [31:0] current_error;
+    logic [31:0] ctrl_signal;
 
-assign current_error = set_wavelength - current_wavelength;
+    // Use logic/wire for continuous assignments
+    assign current_error = set_wavelength - current_wavelength;
+    assign feedback = ctrl_signal[31:16];
 
-always @(posedge clk or posedge reset) begin
-
-    if (reset) begin
-        // Reset logic generally specific to application
-    end 
-    else if (ramp_start) begin
-        if (laser_exists && laser_locked) begin
-                    
-        // PID Calculation
-        integral <= integral + (pid_i * current_error);
-        derivative <= pid_d * (current_error - prev_error);
-        // Calculate control signal
-        feedback = (pid_p * current_error) + integral + derivative; 
-        prev_error <= current_error;// Update previous error term to feed it for derrivative term.
+    always_ff @(posedge clk or posedge reset) begin
+        if (reset) begin
+            integral    <= 32'h0;
+            derivative  <= 32'h0;
+            ctrl_signal <= 32'h0;
+            prev_error  <= 32'h0;
+        end 
+        else if (ramp_start && laser_exists && laser_locked) begin
+            // Non-blocking assignments for synchronous logic
+            integral    <= integral + (pid_i * current_error);
+            derivative  <= pid_d * (current_error - prev_error);
+            
+            // Note: ctrl_signal will use the *previous* integral/derivative values 
+            // in this cycle to match standard pipelined DSP behavior.
+            ctrl_signal <= (pid_p * current_error) + integral + (pid_d * (current_error - prev_error)); 
+            
+            prev_error  <= current_error;
         end
     end
-end
 
 endmodule
