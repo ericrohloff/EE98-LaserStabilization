@@ -1,5 +1,5 @@
 module peak_detection #(
-	parameter logic [15:0] THRESHOLD      = 16'd2000,
+	parameter logic [15:0] THRESHOLD      = 16'd7500,
 	parameter logic [15:0] ASSIGN_WINDOW  = 16'd1500,
 	parameter int unsigned MAX_CANDIDATES = 8
 ) (

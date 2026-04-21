@@ -159,20 +159,16 @@ module algorithm_top (
         .l3_target(l3_set_wavelength),
         .l4_target(l4_set_wavelength),
 
-        .l1_position(l1_peak_position),
-        .l2_position(l2_peak_position),
-        .l3_position(l3_peak_position),
-        .l4_position(l4_peak_position),
+        .l1_position(l1_detected_wavelength),
+        .l2_position(l2_detected_wavelength),
+        .l3_position(l3_detected_wavelength),
+        .l4_position(l4_detected_wavelength),
         .l1_valid(l1_peak_valid),
         .l2_valid(l2_peak_valid),
         .l3_valid(l3_peak_valid),
         .l4_valid(l4_peak_valid)
     );
 
-    assign l1_detected_wavelength = l1_peak_position;
-    assign l2_detected_wavelength = l2_peak_position;
-    assign l3_detected_wavelength = l3_peak_position;
-    assign l4_detected_wavelength = l4_peak_position;
 
 	laser_controller u_l1_controller (
         .clk(clk),
@@ -186,7 +182,7 @@ module algorithm_top (
         .pid_i(l1_pid_i),
         .pid_d(l1_pid_d),
         .set_wavelength(l1_set_wavelength),
-        .current_wavelength(l1_peak_position),
+        .current_wavelength(l1_detected_wavelength),
         .ref_wavelength(ref_set_wavelength),
         .feedback(l1_feedback)
     );
@@ -202,7 +198,7 @@ module algorithm_top (
         .pid_i(l2_pid_i),
         .pid_d(l2_pid_d),
         .set_wavelength(l2_set_wavelength),
-        .current_wavelength(l2_peak_position),
+        .current_wavelength(l2_detected_wavelength),
         .ref_wavelength(ref_set_wavelength),
         .feedback(l2_feedback)
     );
@@ -218,7 +214,7 @@ module algorithm_top (
         .pid_i(l3_pid_i),
         .pid_d(l3_pid_d),
         .set_wavelength(l3_set_wavelength),
-        .current_wavelength(l3_peak_position),
+        .current_wavelength(l3_detected_wavelength),
         .ref_wavelength(ref_set_wavelength),
         .feedback(l3_feedback)
     );
@@ -234,7 +230,7 @@ module algorithm_top (
         .pid_i(l4_pid_i),
         .pid_d(l4_pid_d),
         .set_wavelength(l4_set_wavelength),
-        .current_wavelength(l4_peak_position),
+        .current_wavelength(l4_detected_wavelength),
         .ref_wavelength(ref_set_wavelength),
         .feedback(l4_feedback)
     );
