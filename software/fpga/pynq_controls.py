@@ -18,12 +18,14 @@ from typing import Optional
 
 from pynq import Overlay
 import numpy as np
+import time
 
 
 LASER_SLOT_COUNT = 5
 LASER_BLOCK_SIZE_BYTES = 0x14  # 5 x 32-bit registers per laser block
 REG_STRIDE_BYTES = 0x04
 GLOBAL_FLAGS_REG_ADDR = 25 * REG_STRIDE_BYTES  # slv_reg25
+
 
 class PYNQControls:
     """Abstraction over PYNQ overlay interactions used by server.py."""
@@ -42,7 +44,8 @@ class PYNQControls:
 
     def _slot_base_addr(self, laser_id: int) -> int:
         if laser_id < 0 or laser_id >= LASER_SLOT_COUNT:
-            raise ValueError(f"laser_id must be in range [0, {LASER_SLOT_COUNT - 1}], got {laser_id}")
+            raise ValueError(
+                f"laser_id must be in range [0, {LASER_SLOT_COUNT - 1}], got {laser_id}")
         return int(self.compute_addr_offset(laser_id))
 
     @staticmethod
@@ -54,7 +57,8 @@ class PYNQControls:
         return int(value) & 0xFFFF
 
     def _write_reg(self, addr: int, value: int) -> None:
-        self._overlay.axi_config_registers_0.write(int(addr) & 0xFF, self._u32(value))
+        self._overlay.axi_config_registers_0.write(
+            int(addr) & 0xFF, self._u32(value))
 
     def _read_reg(self, addr: int) -> int:
         return int(self._overlay.axi_config_registers_0.read(int(addr) & 0xFF)) & 0xFFFFFFFF
@@ -67,8 +71,10 @@ class PYNQControls:
         self._write_reg(reg_addr, new_word)
 
     def _update_system_locked_flag(self) -> None:
-        configured_ids = [lid for lid, is_cfg in self._laser_configured.items() if is_cfg]
-        system_locked = bool(configured_ids) and all(self._laser_locked.get(lid, False) for lid in configured_ids)
+        configured_ids = [lid for lid,
+                          is_cfg in self._laser_configured.items() if is_cfg]
+        system_locked = bool(configured_ids) and all(
+            self._laser_locked.get(lid, False) for lid in configured_ids)
 
         flags = self._read_reg(GLOBAL_FLAGS_REG_ADDR)
         if system_locked:
@@ -84,7 +90,8 @@ class PYNQControls:
     @staticmethod
     def _laser_block_index(laser_id: int) -> int:
         if laser_id < 0 or laser_id >= LASER_SLOT_COUNT:
-            raise ValueError(f"laser_id must be in range [0, {LASER_SLOT_COUNT - 1}], got {laser_id}")
+            raise ValueError(
+                f"laser_id must be in range [0, {LASER_SLOT_COUNT - 1}], got {laser_id}")
         return int(laser_id) * LASER_BLOCK_SIZE_BYTES
 
     def _laser_reg_addr(self, laser_id: int, reg_offset: int) -> int:
@@ -96,31 +103,31 @@ class PYNQControls:
         pid_param1: int,
         pid_param2: int,
         pid_param3: int,
-        duration: int,
+        wavelength: int,
     ) -> bool:
         """Initialize a laser control path in hardware."""
         base_addr = self._slot_base_addr(laser_id)
 
         # slv_reg{0,5,10,15,20}: {id[3:0], exists[4], locked[5]}
-        ctrl_word = self._pack_laser_ctrl_word(laser_id=laser_id, exists=True, locked=False)
+        ctrl_word = self._pack_laser_ctrl_word(
+            laser_id=laser_id, exists=True, locked=False)
         self._write_reg(base_addr + 0x00, ctrl_word)
 
         # slv_reg{1..3, 6..8, ...}: PID P/I/D
         self.configure_laser_pid(laser_id, pid_param1, pid_param2, pid_param3)
 
-        # Incoming command value from Python is routed to set_wavelength.
-        self._write_laser_set_wavelength(laser_id, pid_param1)
+        self._write_laser_set_wavelength(laser_id, wavelength)
 
         self._laser_configured[laser_id] = True
         self._laser_locked[laser_id] = False
         self._update_system_locked_flag()
         self._logger.debug(
-            "pynq_controls.create_laser | laser_id=%d p1=%d p2=%d p3=%d dur=%d",
+            "pynq_controls.create_laser | laser_id=%d p1=%d p2=%d p3=%d wavelength=%d",
             laser_id,
             pid_param1,
             pid_param2,
             pid_param3,
-            duration,
+            wavelength,
         )
         return True
 
@@ -138,7 +145,8 @@ class PYNQControls:
         self._laser_configured[laser_id] = False
         self._laser_locked[laser_id] = False
         self._update_system_locked_flag()
-        self._logger.debug("pynq_controls.remove_laser | laser_id=%d", laser_id)
+        self._logger.debug(
+            "pynq_controls.remove_laser | laser_id=%d", laser_id)
         return True
 
     def configure_laser_pid(
@@ -158,7 +166,6 @@ class PYNQControls:
 
         # Keep Python-commanded setpoint in set_wavelength register.
         self._write_laser_set_wavelength(laser_id, pid_param1)
-
 
         self._logger.debug(
             "pynq_controls.configure_laser_pid | laser_id=%d p1=%d p2=%d p3=%d",
@@ -194,15 +201,30 @@ class PYNQControls:
         )
         return True
 
+    @staticmethod
+    def _duration_to_step_size(duration_us: int) -> int:
+        """Convert scan duration (µs) to ramp step size.
+        step_size = 2^16 / duration_us
+        """
+        if duration_us <= 0:
+            raise ValueError(
+                f"duration_us must be positive, got {duration_us}")
+        return (1 << 16) // duration_us
+
     def start_cavity(self, duration: int) -> bool:
         """Start cavity scan logic in hardware."""
+        step_size = self._duration_to_step_size(duration)
+        self._logger.debug(
+            "pynq_controls.start_cavity | dur=%d step_size=%d", duration, step_size)
+
+        # TODO: write step_size to ramp step size register when register map is finalized
+
         # slv_reg25[0]=system_on, slv_reg25[1]=system_locked
         flags = self._read_reg(GLOBAL_FLAGS_REG_ADDR)
         flags = flags | 0x1
         self._write_reg(GLOBAL_FLAGS_REG_ADDR, flags)
 
         self._system_on = True
-        self._logger.debug("pynq_controls.start_cavity | dur=%d", duration)
         return True
 
     def stop_cavity(self) -> bool:
@@ -216,10 +238,32 @@ class PYNQControls:
         self._logger.debug("pynq_controls.stop_cavity")
         return True
 
+    def request_adc_scan(self) -> list:
+        """Requests a list of adc samples making up an entire scan."""
+        # TODO: Calculate number of samples based on cavity scan config values
+        NUM_SAMPLES = 500
+
+        flags = self._read_reg(GLOBAL_FLAGS_REG_ADDR)
+        flags = flags | 0b100
+        self._write_reg(GLOBAL_FLAGS_REG_ADDR, flags)
+
+        # TODO: better way to wait for scan to be complete
+        time.sleep(0.05)
+        values = []
+        for i in range(0, NUM_SAMPLES):
+            values.append(self._overlay.axi_bram_ctrl_0.read(i << 2))
+
+        flags = self._read_reg(GLOBAL_FLAGS_REG_ADDR)
+        flags = flags & (~0b100)
+        self._write_reg(GLOBAL_FLAGS_REG_ADDR, flags)
+
+        return values
+
     def read_laser_pid_param(self, laser_id: int, param_index: int) -> int:
         """Read PID parameter 1/2/3 for a given laser from MMIO."""
         if param_index not in (1, 2, 3):
-            raise ValueError(f"param_index must be 1, 2, or 3, got {param_index}")
+            raise ValueError(
+                f"param_index must be 1, 2, or 3, got {param_index}")
 
         reg_offset = 0x04 + (param_index - 1) * REG_STRIDE_BYTES
         value = self._read_reg(self._laser_reg_addr(laser_id, reg_offset))
@@ -291,9 +335,7 @@ class PYNQControls:
         )
         return result
 
-
     def compute_addr_offset(self, laser_id: int) -> np.uint8:
         """Compute MMIO address offset for a given laser and parameter.
            Each laser has 5 registers (1 config, 3 PID params, 1 duration) spaced 0x04 apart."""
         return np.uint8((laser_id * 5 * 0x04) & 0xFF)
-        
