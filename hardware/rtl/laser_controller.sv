@@ -31,7 +31,8 @@ always @(posedge clk or negedge rst_n) begin
     if (~rst_n) begin
         // Reset logic generally specific to application
     end 
-    else if (sampling_flag) begin
+    else if (ramp_start) begin
+        if (laser_exists && laser_locked) begin
                     
         // PID Calculation
         integral <= integral + (pid_i * current_error);
@@ -39,6 +40,7 @@ always @(posedge clk or negedge rst_n) begin
         // Calculate control signal
         control_signal = (pid_p * current_error) + integral + derivative; 
         prev_error <= current_error;// Update previous error term to feed it for derrivative term.
+        end
     end
 end
 
