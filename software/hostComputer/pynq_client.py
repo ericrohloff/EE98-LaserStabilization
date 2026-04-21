@@ -46,7 +46,8 @@ def _validate_nibble(name: str, value: int) -> int:
 def _validate_uint32(name: str, value: int) -> int:
     v = int(value)
     if v < 0 or v > _UINT32_MAX:
-        raise ValueError(f"{name} must be in range [0, 4294967295], got {value}.")
+        raise ValueError(
+            f"{name} must be in range [0, 4294967295], got {value}.")
     return v
 
 
@@ -212,13 +213,15 @@ class PYNQController:
             while len(data) < nbytes:
                 chunk = self._socket.recv(nbytes - len(data))
                 if not chunk:
-                    self._logger.error("Connection closed by PYNQ board while receiving response.")
+                    self._logger.error(
+                        "Connection closed by PYNQ board while receiving response.")
                     self._connected = False
                     return None
                 data += chunk
             return data
         except socket.timeout:
-            self._logger.warning("Timed out while receiving response bytes (wanted=%d).", nbytes)
+            self._logger.warning(
+                "Timed out while receiving response bytes (wanted=%d).", nbytes)
             return None
         except OSError as exc:
             self._logger.error("Response recv failed: %s", exc)
@@ -230,7 +233,8 @@ class PYNQController:
         if header is None:
             return False, b""
 
-        version, response_id, status, _reserved, payload_length = struct.unpack(RESPONSE_FORMAT, header)
+        version, response_id, status, _reserved, payload_length = struct.unpack(
+            RESPONSE_FORMAT, header)
         expected_id = _CMD_ID[command]
 
         self._logger.debug(
@@ -278,7 +282,8 @@ class PYNQController:
         if status == ACK_OK:
             return True, payload
 
-        self._logger.error("PYNQ board returned error status for %s.", command.value)
+        self._logger.error(
+            "PYNQ board returned error status for %s.", command.value)
         return False, payload
 
     def _send_with_response(
@@ -334,7 +339,8 @@ class PYNQController:
 
         success, payload = self._recv_response(command)
         if success:
-            self._logger.info("RESP OK | command=%s | payload_len=%d", command.value, len(payload))
+            self._logger.info(
+                "RESP OK | command=%s | payload_len=%d", command.value, len(payload))
         return success, payload
 
     def _send(
@@ -366,10 +372,12 @@ class PYNQController:
     def connect(self) -> bool:
         """Open a TCP connection to the PYNQ board."""
         if self._connected:
-            self._logger.warning("Already connected to %s:%d.", self.server_ip, self.server_port)
+            self._logger.warning("Already connected to %s:%d.",
+                                 self.server_ip, self.server_port)
             return True
 
-        self._logger.info("Connecting to PYNQ board at %s:%d ...", self.server_ip, self.server_port)
+        self._logger.info("Connecting to PYNQ board at %s:%d ...",
+                          self.server_ip, self.server_port)
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(self.timeout)
@@ -474,6 +482,7 @@ class PYNQController:
             self._laser_locked[laser_id] = False
         return success
 
+    # Translate to ramp math wavelenght->ramp
     def create_laser(
         self,
         laser_id: int,
@@ -520,6 +529,7 @@ class PYNQController:
             self._laser_locked[laser_id] = False
         return success
 
+    # scan duration to ramp step position
     def start_cavity(self, duration: int) -> bool:
         self._logger.info("Starting cavity | duration=%d", duration)
         success = self._send(

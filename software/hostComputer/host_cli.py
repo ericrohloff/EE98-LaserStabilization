@@ -113,7 +113,8 @@ def _run_cli_commands(ctrl: PYNQController, commands: list[str]) -> bool:
         method_name, args, kwargs = _parse_cli_command(spec)
         method = getattr(ctrl, method_name, None)
         if method is None or not callable(method):
-            raise ValueError(f"Unknown API method in --command #{idx}: {method_name}")
+            raise ValueError(
+                f"Unknown API method in --command #{idx}: {method_name}")
 
         print(f"> {spec}")
         result = method(*args, **kwargs)
@@ -186,8 +187,10 @@ def _build_cli_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="PYNQ laser controller CLI",
     )
-    parser.add_argument("--ip", default="192.168.3.1", help="PYNQ server IP address")
-    parser.add_argument("--port", type=int, default=5000, help="PYNQ server TCP port")
+    parser.add_argument("--ip", default="192.168.3.1",
+                        help="PYNQ server IP address")
+    parser.add_argument("--port", type=int, default=5000,
+                        help="PYNQ server TCP port")
     parser.add_argument(
         "--timeout",
         type=float,

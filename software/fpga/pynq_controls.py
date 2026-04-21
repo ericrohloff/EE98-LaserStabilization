@@ -201,15 +201,30 @@ class PYNQControls:
         )
         return True
 
+    @staticmethod
+    def _duration_to_step_size(duration_us: int) -> int:
+        """Convert scan duration (µs) to ramp step size.
+        step_size = 2^16 / duration_us
+        """
+        if duration_us <= 0:
+            raise ValueError(
+                f"duration_us must be positive, got {duration_us}")
+        return (1 << 16) // duration_us
+
     def start_cavity(self, duration: int) -> bool:
         """Start cavity scan logic in hardware."""
+        step_size = self._duration_to_step_size(duration)
+        self._logger.debug(
+            "pynq_controls.start_cavity | dur=%d step_size=%d", duration, step_size)
+
+        # TODO: write step_size to ramp step size register when register map is finalized
+
         # slv_reg25[0]=system_on, slv_reg25[1]=system_locked
         flags = self._read_reg(GLOBAL_FLAGS_REG_ADDR)
         flags = flags | 0x1
         self._write_reg(GLOBAL_FLAGS_REG_ADDR, flags)
 
         self._system_on = True
-        self._logger.debug("pynq_controls.start_cavity | dur=%d", duration)
         return True
 
     def stop_cavity(self) -> bool:
