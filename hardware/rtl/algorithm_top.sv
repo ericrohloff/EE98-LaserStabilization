@@ -16,6 +16,7 @@ module algorithm_top (
 	input  wire [31:0] l1_pid_d,
 	input  wire [15:0] l1_set_wavelength,
 	output wire [15:0] l1_detected_wavelength,
+	output wire [15:0] l1_debug_feedback,
 
 	input  wire [3:0] l2_id,
 	input  wire l2_exists,
@@ -25,6 +26,7 @@ module algorithm_top (
 	input  wire [31:0] l2_pid_d,
 	input  wire [15:0] l2_set_wavelength,
 	output wire [15:0] l2_detected_wavelength,
+	output wire [15:0] l2_debug_feedback,
 
 	input  wire [3:0] l3_id,
 	input  wire l3_exists,
@@ -34,6 +36,7 @@ module algorithm_top (
 	input  wire [31:0] l3_pid_d,
 	input  wire [15:0] l3_set_wavelength,
 	output wire [15:0] l3_detected_wavelength,
+	output wire [15:0] l3_debug_feedback,
 
 	input  wire [3:0] l4_id,
 	input  wire l4_exists,
@@ -43,6 +46,7 @@ module algorithm_top (
 	input  wire [31:0] l4_pid_d,
 	input  wire [15:0] l4_set_wavelength,
 	output wire [15:0] l4_detected_wavelength,
+	output wire [15:0] l4_debug_feedback,
 
 	input  wire system_on,
 	input  wire system_locked,
@@ -145,6 +149,11 @@ module algorithm_top (
     logic [15:0] l2_feedback;
     logic [15:0] l3_feedback;
     logic [15:0] l4_feedback;
+    
+    assign l1_debug_feedback = l1_feedback;
+    assign l2_debug_feedback = l2_feedback;
+    assign l3_debug_feedback = l3_feedback;
+    assign l4_debug_feedback = l4_feedback;
 
 	peak_detection u_peak_detection (
         .clk(clk),
@@ -186,6 +195,7 @@ module algorithm_top (
         .ref_wavelength(ref_set_wavelength),
         .feedback(l1_feedback)
     );
+    
 	laser_controller u_l2_controller (
     .clk(clk),
     .reset(reset),

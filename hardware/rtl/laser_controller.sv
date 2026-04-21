@@ -22,13 +22,13 @@ module laser_controller (
 reg [15:0] prev_error = 16'h0000;
 reg [15:0] integral = 16'h0000;
 reg [15:0] derivative = 16'h0000;
-reg [15:0] current_error = 16'h0000;
+reg [15:0] current_error;
 
 assign current_error = set_wavelength - current_wavelength;
 
-always @(posedge clk or negedge rst_n) begin
+always @(posedge clk or posedge reset) begin
 
-    if (~rst_n) begin
+    if (reset) begin
         // Reset logic generally specific to application
     end 
     else if (ramp_start) begin
@@ -38,12 +38,10 @@ always @(posedge clk or negedge rst_n) begin
         integral <= integral + (pid_i * current_error);
         derivative <= pid_d * (current_error - prev_error);
         // Calculate control signal
-        control_signal = (pid_p * current_error) + integral + derivative; 
+        feedback = (pid_p * current_error) + integral + derivative; 
         prev_error <= current_error;// Update previous error term to feed it for derrivative term.
         end
     end
 end
-
-assign feedback = control_signal;
 
 endmodule
