@@ -1,7 +1,7 @@
 module peak_detection #(
 	parameter logic [15:0] THRESHOLD      = 16'd7500,
 	parameter logic [15:0] ASSIGN_WINDOW  = 16'd1500,
-	parameter int unsigned MAX_CANDIDATES = 8
+	parameter int unsigned MAX_CANDIDATES = 6
 ) (
 	input  logic        clk,
 	input  logic        reset,
@@ -9,11 +9,14 @@ module peak_detection #(
 	input  logic        adc_sample_valid,
 	input  logic [15:0] current_ramp_pos,
 	input  logic        ramp_start,
-	input  logic [15:0] ref_target,
-	input  logic [15:0] l1_target,
-	input  logic [15:0] l2_target,
-	input  logic [15:0] l3_target,
-	input  logic [15:0] l4_target,
+	input  logic 		l1_exists,
+	input  logic 		l2_exists,
+	input  logic 		l3_exists,
+	input  logic 		l4_exists,
+	input  logic 		l1_locked,
+	input  logic 		l2_locked,
+	input  logic 		l3_locked,
+	input  logic 		l4_locked,
 	output logic [15:0] l1_position,
 	output logic [15:0] l2_position,
 	output logic [15:0] l3_position,
@@ -30,6 +33,16 @@ module peak_detection #(
 	logic [15:0] curr_peak_amp;
 	logic [15:0] curr_peak_pos;
 
+	logic [15:0] r1_position;
+	logic [15:0] r2_position;
+
+	logic [3:0] locked_mask = {l4_locked && l4_exists, l3_locked && l3_exists, l2_locked && l2_exists, l1_locked && l1_exists};
+	integer num_locked = locked_mask[0] + locked_mask[1] + locked_mask[2] + locked_mask[3];
+
+
+	// candidates: r1, l1, l2, l3, l4, r2
+	// always assign r1 to first, r2 to last 
+	// then assign l1-l4 to middle based on which are locked
 	logic [15:0] candidate_amp [0:MAX_CANDIDATES-1];
 	logic [15:0] candidate_pos [0:MAX_CANDIDATES-1];
 	logic        candidate_valid [0:MAX_CANDIDATES-1];
@@ -48,32 +61,6 @@ module peak_detection #(
 		end
 	endfunction
 
-	task automatic select_candidate;
-		input  [15:0] expected_pos;
-		input  [MAX_CANDIDATES-1:0] used_mask;
-		output logic found;
-		output logic [IDX_W-1:0] selected_idx;
-		integer j;
-		logic [15:0] this_diff;
-		logic [15:0] best_diff;
-		begin
-			found = 1'b0;
-			selected_idx = '0;
-			best_diff = 16'hFFFF;
-
-			for (j = 0; j < MAX_CANDIDATES; j = j + 1) begin
-				if (candidate_valid[j] && !used_mask[j]) begin
-					this_diff = abs_diff(candidate_pos[j], expected_pos);
-					if ((this_diff <= ASSIGN_WINDOW) && (!found || (this_diff < best_diff))) begin
-						found = 1'b1;
-						selected_idx = j[IDX_W-1:0];
-						best_diff = this_diff;
-					end
-				end
-			end
-		end
-	endtask
-
 	always_ff @(posedge clk or posedge reset) begin
 		if (reset) begin
 			in_spike       <= 1'b0;
@@ -85,10 +72,10 @@ module peak_detection #(
 			l3_valid <= 1'b0;
 			l4_valid <= 1'b0;
 
-			l1_position <= l1_target;
-			l2_position <= l2_target;
-			l3_position <= l3_target;
-			l4_position <= l4_target;
+			l1_position <= 16'd0;
+			l2_position <= 16'd0;
+			l3_position <= 16'd0;
+			l4_position <= 16'd0;
 
 			for (i = 0; i < MAX_CANDIDATES; i = i + 1) begin
 				candidate_amp[i]   <= 16'd0;
@@ -102,9 +89,6 @@ module peak_detection #(
 			l4_valid <= 1'b0;
 
 			if (ramp_start) begin
-				logic [MAX_CANDIDATES-1:0] used_mask;
-				logic found;
-				logic [IDX_W-1:0] idx;
 
 				if (in_spike && (candidate_count < MAX_CANDIDATES)) begin
 					candidate_amp[candidate_count[IDX_W-1:0]]   <= curr_peak_amp;
@@ -117,38 +101,47 @@ module peak_detection #(
 				curr_peak_amp <= 16'd0;
 				curr_peak_pos <= 16'd0;
 
-				used_mask = '0;
 
-				// Reserve the best candidate near the reference target first.
-				select_candidate(ref_target, used_mask, found, idx);
-				if (found)
-					used_mask[idx] = 1'b1;
+				// assign candidates in order based on how many found 
+				// invalid- didn't see both reference peaks 
+				// based on candidate_count, assign reference peaks in order r1, l1 ... l4, r2
 
-				select_candidate(l1_target, used_mask, found, idx);
-				if (found) begin
-					l1_position <= candidate_pos[idx];
-					l1_valid <= 1'b1;
-					used_mask[idx] = 1'b1;
-				end
-
-				select_candidate(l2_target, used_mask, found, idx);
-				if (found) begin
-					l2_position <= candidate_pos[idx];
-					l2_valid <= 1'b1;
-					used_mask[idx] = 1'b1;
-				end
-
-				select_candidate(l3_target, used_mask, found, idx);
-				if (found) begin
-					l3_position <= candidate_pos[idx];
-					l3_valid <= 1'b1;
-					used_mask[idx] = 1'b1;
-				end
-
-				select_candidate(l4_target, used_mask, found, idx);
-				if (found) begin
-					l4_position <= candidate_pos[idx];
-					l4_valid <= 1'b1;
+				// didn't see correct number of peaks 
+				if (candidate_count != num_locked + 2) begin 
+					r1_position <= 16'd0;
+					r2_position <= 16'd0;
+					l1_position <= 16'd0;
+					l2_position <= 16'd0;
+					l3_position <= 16'd0;
+					l4_position <= 16'd0;
+					l1_valid <= 1'b0;
+					l2_valid <= 1'b0;
+					l3_valid <= 1'b0;
+					l4_valid <= 1'b0;
+				end else begin
+					// assign r1 to lowest pos, r2 to highest pos 
+					r1_position <= candidate_pos[0];
+					r2_position <= candidate_pos[candidate_count-1];
+					// assign l1-l4 to middle candidates based on which are locked 
+					integer candidate_index = 1; 
+					for (i = 0; i < 4; i = i + 1) begin 
+						if (locked_mask[i]) begin 
+							case (i) 
+								0: begin l1_position <= candidate_pos[candidate_index]; l1_valid <= 1'b1; end
+								1: begin l2_position <= candidate_pos[candidate_index]; l2_valid <= 1'b1; end
+								2: begin l3_position <= candidate_pos[candidate_index]; l3_valid <= 1'b1; end
+								3: begin l4_position <= candidate_pos[candidate_index]; l4_valid <= 1'b1; end
+							endcase
+							candidate_index = candidate_index + 1;
+						end else begin 
+							case (i) 
+								0: begin l1_position <= 16'd0; l1_valid <= 1'b0; end
+								1: begin l2_position <= 16'd0; l2_valid <= 1'b0; end
+								2: begin l3_position <= 16'd0; l3_valid <= 1'b0; end
+								3: begin l4_position <= 16'd0; l4_valid <= 1'b0; end
+							endcase
+						end
+					end
 				end
 
 				candidate_count <= '0;

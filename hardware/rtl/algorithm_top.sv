@@ -149,6 +149,8 @@ module algorithm_top (
     logic [15:0] l2_feedback;
     logic [15:0] l3_feedback;
     logic [15:0] l4_feedback;
+
+    assign ref_detected_wavelength = 16'd0;
     
     assign l1_debug_feedback = l1_feedback;
     assign l2_debug_feedback = l2_feedback;
@@ -162,11 +164,14 @@ module algorithm_top (
         .adc_sample_valid(adc_sample_valid),
         .current_ramp_pos(current_ramp_pos),
         .ramp_start(ramp_cycle_start),
-        .ref_target(ref_set_wavelength),
-        .l1_target(l1_set_wavelength),
-        .l2_target(l2_set_wavelength),
-        .l3_target(l3_set_wavelength),
-        .l4_target(l4_set_wavelength),
+    .l1_exists(l1_exists),
+    .l2_exists(l2_exists),
+    .l3_exists(l3_exists),
+    .l4_exists(l4_exists),
+    .l1_locked(l1_locked),
+    .l2_locked(l2_locked),
+    .l3_locked(l3_locked),
+    .l4_locked(l4_locked),
 
         .l1_position(l1_detected_wavelength),
         .l2_position(l2_detected_wavelength),
