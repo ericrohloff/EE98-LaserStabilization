@@ -65,9 +65,16 @@ class PYNQControls:
 
     def _write_laser_set_wavelength(self, laser_id: int, set_wavelength: int) -> None:
         """Write set_wavelength (upper 16 bits) and preserve detected_wavelength (lower 16 bits)."""
+        # Calculate wavelength as fraction between reference lasers
+        if not (set_wavelength > self._ref_wavelength and set_wavelength < self._ref_wavelength * 2):
+            raise ValueError(
+                f"set_wavelength must be between {self._ref_wavelength} and {self._ref_wavelength * 2}, got {set_wavelength}")
+        
+
+        frac = (set_wavelength - self._ref_wavelength) / self._ref_wavelength
         reg_addr = self._laser_reg_addr(laser_id, 0x10)
         current_word = self._read_reg(reg_addr)
-        new_word = (self._u16(set_wavelength) << 16) | (current_word & 0xFFFF)
+        new_word = (self._u16(frac * 0xFFFF) << 16) | (current_word & 0xFFFF)
         self._write_reg(reg_addr, new_word)
 
     def _update_system_locked_flag(self) -> None:
@@ -130,6 +137,9 @@ class PYNQControls:
             wavelength,
         )
         return True
+    
+    def configure_reference_wavelength(self, wavelength: int):
+        self._ref_wavelength = wavelength
 
     def remove_laser(self, laser_id: int) -> bool:
         """Tear down a laser control path in hardware."""
