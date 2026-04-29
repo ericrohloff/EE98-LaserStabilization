@@ -18,14 +18,14 @@ module laser_controller (
     output logic [15:0] feedback
 );
 
-    logic [31:0] prev_error;
-    logic [31:0] integral;
-    logic [31:0] current_error;
-    logic [31:0] ctrl_signal;
+    logic signed [31:0] prev_error;
+    logic signed [31:0] integral;
+    logic signed [31:0] current_error;
+    logic signed [31:0] ctrl_signal;
 
-    // Use logic/wire for continuous assignments
-    assign current_error = set_wavelength - current_wavelength;
-    assign feedback = ctrl_signal[31:16] + 16'h8000;
+    // Signed internal PID math, unsigned DAC output centered at midscale.
+    assign current_error = $signed({1'b0, set_wavelength}) - $signed({1'b0, current_wavelength});
+    assign feedback = $unsigned((ctrl_signal >>> 16) + 32'sd32768);
 
     always_ff @(posedge clk or posedge reset) begin
         if (reset) begin
@@ -35,8 +35,10 @@ module laser_controller (
         end 
         else if (ramp_start && laser_exists && laser_locked) begin
             if (peak_valid) begin
-                integral    <= integral + (pid_i * current_error);
-                ctrl_signal <= (pid_p * current_error) + integral + (pid_d * (current_error - prev_error)); 
+                integral    <= integral + ($signed({1'b0, pid_i}) * current_error);
+                ctrl_signal <= ($signed({1'b0, pid_p}) * current_error)
+                             + integral
+                             + ($signed({1'b0, pid_d}) * (current_error - prev_error));
                 prev_error  <= current_error;
             end
         end
