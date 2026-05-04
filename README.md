@@ -28,7 +28,8 @@ Science Group.
 ## 2. Hardware Setup and Documentation
 
 In order to start developing and testing the FPGA-based feedback control system,
-you will need to set up the hardware as follows:
+you will need to set up the hardware as decscribed in `docs/hardware_setup.md`.
+This includes assembling the necessary components.
 
 ## 3. Getting Started
 
