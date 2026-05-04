@@ -134,10 +134,10 @@ module peak_detection #(
 					for (i = 0; i < 4; i = i + 1) begin
 						if (assign_locked_mask[i]) begin
 							case (i)
-								0: l1_position <= {{assign_candidate_pos[candidate_index] - r1_position, 16'h0000} * multiplier}[31:16];
-								1: l2_position <= {{assign_candidate_pos[candidate_index] - r1_position, 16'h0000} * multiplier}[31:16];
-								2: l3_position <= {{assign_candidate_pos[candidate_index] - r1_position, 16'h0000} * multiplier}[31:16];
-								// 3: l4_position <= {{assign_candidate_pos[candidate_index] - r1_position, 16'h0000} * multiplier}[31:16];
+								0: l1_position <= {{assign_candidate_pos[candidate_index] - assign_r1_position, 16'h0000} * multiplier}[31:16];
+								1: l2_position <= {{assign_candidate_pos[candidate_index] - assign_r1_position, 16'h0000} * multiplier}[31:16];
+								2: l3_position <= {{assign_candidate_pos[candidate_index] - assign_r1_position, 16'h0000} * multiplier}[31:16];
+								// 3: l4_position <= {{assign_candidate_pos[candidate_index] - assign_r1_position, 16'h0000} * multiplier}[31:16];
 							endcase
 							candidate_index = candidate_index + 1;
 						end else begin
