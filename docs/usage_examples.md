@@ -1,0 +1,111 @@
+# Usage Examples
+
+This guide shows practical examples of how to use the laser stabilization system
+from the host computer.
+
+## Setup
+
+First, make sure the server is running on the PYNQ board and the host client is
+installed:
+
+```bash
+# On host computer
+cd software/hostComputer
+python host_cli.py
+```
+
+You'll see a prompt where you can type commands.
+
+## Basic Workflow
+
+### 1. Create a Laser
+
+Before you can control a laser, you need to create it with PID parameters.
+
+```
+create_laser(pid)
+```
+
+**Parameters:**
+
+- `pid`: Laser index (0-4). Pick any from 0-4 for the 5 available laser slots.
+
+---
+
+### 2. Configure Laser PID Parameters
+
+Adjust the PID tuning parameters for feedback control.
+
+```
+configure_laser_pid(pid, kp, ki, kd)
+```
+
+**Parameters:**
+
+- `pid`: Laser index (0-4)
+- `kp`: Proportional gain. Higher = faster response, too high = unstable. Start
+  with 100.
+- `ki`: Integral gain. Reduces steady-state error over time. Start with 50.
+- `kd`: Derivative gain. Helps dampen oscillations. Start with 10.
+
+---
+
+### 3. Start Cavity Scan
+
+Begin scanning the optical cavity. This is required before locking any laser.
+
+```
+start_cavity_scan(duration)
+```
+
+**Parameters:**
+
+- `duration`: How long to scan in seconds.
+
+---
+
+### 4. Lock a Laser
+
+Lock a laser to a target wavelength while the cavity is scanning.
+
+```
+lock(pid, wavelength)
+```
+
+**Parameters:**
+
+- `pid`: Laser index (0-4)
+- `wavelength`: Target wavelength in nanometers (nm)
+
+---
+
+### 5. Unlock a Laser
+
+Release a laser from frequency locking. It will stop trying to hold its
+wavelength.
+
+```
+unlock(pid)
+```
+
+**Parameters:**
+
+- `pid`: Laser index (0-4)
+
+---
+
+### 6. Stop Cavity Scan
+
+Stop the cavity scan and disable all feedback.
+
+```
+stop_cavity_scan()
+```
+
+**Use Case: End the experiment**
+
+```
+stop_cavity_scan()
+```
+
+---

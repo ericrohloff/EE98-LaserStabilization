@@ -1,15 +1,3 @@
-"""Board-local sanity check for PYNQControls register read/write behavior.
-
-Run this on the PYNQ board from repository root:
-    python3 sanity_check.py
-
-What it validates:
-1) Python command values are routed into set_wavelength (upper 16 bits) during PID configuration.
-2) PID registers read back as written.
-3) system_on toggles through start/stop.
-4) detected_wavelength is treated as FPGA-driven (read-only from software side).
-"""
-
 from __future__ import annotations
 
 from software.board.pynq_controls import PYNQControls

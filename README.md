@@ -1,36 +1,157 @@
 # EE98: Laser Stabilization for Trapped Ion Quantum Computing
+
 **Team Name:** Blast Off Bronze  
 **Institution:** Tufts University, School of Engineering  
-**Sponsors:** Professor Mark Hempstead (Tufts) & University of Sydney Quantum Science Group
+**Sponsors:** Professor Mark Hempstead (Tufts) & University of Sydney Quantum
+Science Group
 
 ## 1. Project Overview
-This repository contains the design and implementation of a high-speed feedback control system on an FPGA, specifically engineered to stabilize lasers used in trapped ion quantum computers.
+
+This repository contains the design and implementation of a high-speed feedback
+control system on an FPGA, specifically engineered to stabilize lasers used in
+trapped ion quantum computers.
 
 ### The Challenge
-In quantum computing, laser frequency and intensity stability are critical. Even infinitesimal fluctuations can decohere qubits, leading to errors in quantum gates. Existing  solutions often lack the low-latency response required for real-time feedback. 
+
+In quantum computing, laser frequency and intensity stability are critical. Even
+infinitesimal fluctuations can decohere qubits, leading to errors in quantum
+gates. Existing solutions often lack the low-latency response required for
+real-time feedback.
 
 ### Our Solution
-**Blast Off Bronze** utilizes the custom hardware of FPGAs to provide an ultra-low-latency method for laser frequency locking. This system is designed to meet the rigorous specifications provided by the University of Sydney’s Quantum Science Group.
+
+**Blast Off Bronze** utilizes the custom hardware of FPGAs to provide an
+ultra-low-latency method for laser frequency locking. This system is designed to
+meet the rigorous specifications provided by the University of Sydney’s Quantum
+Science Group.
 
 ## 2. Hardware Setup and Documentation
+
+In order to start developing and testing the FPGA-based feedback control system,
+you will need to set up the hardware as follows:
 
 ## 3. Getting Started
 
 ### Prerequisites
 
-### Installation
+- **PYNQ Board**: Xilinx AUP-ZU3 with PYNQ OS installed
+- **Python 3.8+**: On both the PYNQ board and host computer
+- **PYNQ Framework**: Pre-installed on the board
+- **Network**: Ethernet connection between host and PYNQ board (IP: 192.168.3.1)
+- **FPGA Bitstream**: Compiled `.bit` file from the Vivado project
+- **Hardware Handoff**: Associated `.hwh` file for PYNQ overlay loading
 
+### 3.1 Initial Board Setup
+
+1. **Flash the PYNQ Image**:
+    - Download the PYNQ image from the
+      [official PYNQ releases](https://github.com/Xilinx/PYNQ/releases)
+    - Follow the
+      [PYNQ Getting Started guide](https://pynq.readthedocs.io/en/latest/getting_started.html)
+    - Flash the image to a microSD card using Etcher or similar tool
+    - Insert the microSD card into the Xilinx AUP-ZU3 board
+
+2. **Network Configuration**:
+    - Connect the PYNQ board to your network via Ethernet
+    - Verify connectivity by pinging the board: `ping 192.168.3.1`
+    - Default credentials: `xilinx` / `xilinx`
+
+### 3.2 Building and Transferring the Bitstream
+
+**Copy Files from Repositiory**: - Copy the precompiled bitstream (`.bit`) and
+hardware handoff (`.hwh`) files from the `hardware/` directory to the PYNQ board
+directory.
+
+**Transfer Files to PYNQ Board**:
+
+### 3.3 Running the Server
+
+1. **SSH into the PYNQ Board**:
+
+    ```bash
+    ssh xilinx@192.168.3.1
+    # password: xilinx
+    ```
+
+2. **Activate the PYNQ Environment**:
+
+    ```bash
+    sudo -i
+    source /usr/local/share/pynq-venv/bin/activate
+    ```
+
+3. **Navigate to the Server Directory**:
+
+    ```bash
+    cd /home/xilinx/jupyter_notebooks/
+    # Or copy server.py here if not already present
+    ```
+
+4. **Start the Server**:
+
+    ```bash
+    python server.py
+    ```
+
+### 3.4 Connecting from Host Computer
+
+Once the server is running, you can interact with it from your development
+machine:
+
+1. **Install Host Dependencies**:
+
+    ```bash
+    cd software/hostComputer
+    ```
+
+2. **Run the CLI Client** (from repository root):
+
+    ```bash
+    python software/hostComputer/host_cli.py
+    ```
+
+3. **Example Commands**:
+
+    ```bash
+    # Create and configure a laser
+    create_laser(0, kp=100, ki=50, kd=10)
+
+    # Start cavity scan for 10 seconds
+    start_cavity_scan(10)
+
+    # Lock a laser at target wavelength
+    lock(0, 650.0)
+    ```
 
 ## 4. Repository Structure
 
+- `hardware/`: Contains the FPGA design files, including VHDL/Verilog code and
+  constraints.
+- `software/`: Contains any software components, such as drivers or control
+  interfaces.
+- `docs/`: Contains documentation, including setup guides and design
+  specifications.
+- `tests/`: Contains testbenches and simulation files for validating the FPGA
+  design.
+- `README.md`: This file, providing an overview of the project and instructions
+  for use.
+
 ## 5. Usage
 
+This project is intended for use in a laboratory setting, specifically for
+researchers working on trapped ion quantum computing. The FPGA-based feedback
+control system can be modified and integrated with existing laser setups to
+enhance stability and performance. Reference commands and usage examples are
+provided in `docs/usage_examples.md`
+
 ## 6. Team
-+ Eric Rohloff
-+ Abe Nelson
-+ Matt Dacey
-+ Josh Wilkie
+
+- Eric Rohloff
+- Abe Nelson
+- Matt Dacey
+- Josh Wilkie
 
 **Acknowledgments**
 
-Special thanks to Professor Mark Hempstead and the University of Syndey Quantum Science Group for their support and sponsorship.
+Special thanks to Professor Mark Hempstead and the University of Syndey Quantum
+Science Group for their support and sponsorship.
