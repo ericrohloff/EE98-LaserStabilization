@@ -46,7 +46,7 @@ This includes assembling the necessary components.
 
 1. **Flash the PYNQ Image**:
     - Follow the
-      [AUP-ZU# Getting Started guide]([https://pynq.readthedocs.io/en/latest/getting_started.html](https://xilinx.github.io/AUP-ZU3/getting_started.html)
+      [AUP-ZU3 Getting Started guide](https://xilinx.github.io/AUP-ZU3/getting_started.html)
         - Download and Flash the image linked in the guide to a microSD card using Balena Etcher or similar tool
     - Insert the microSD card into the Xilinx AUP-ZU3 board
 
