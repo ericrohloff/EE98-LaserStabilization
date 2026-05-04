@@ -58,7 +58,7 @@ you will need to set up the hardware as follows:
 
 ### 3.2 Building and Transferring the Bitstream
 
-** Copy Files from Repositiory**: - Copy the precompiled bitstream (`.bit`) and
+**Copy Files from Repositiory**: - Copy the precompiled bitstream (`.bit`) and
 hardware handoff (`.hwh`) files from the `hardware/` directory to the PYNQ board
 directory.
 
