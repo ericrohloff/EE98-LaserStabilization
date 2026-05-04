@@ -30,12 +30,6 @@ create_laser(pid)
 
 - `pid`: Laser index (0-4). Pick any from 0-4 for the 5 available laser slots.
 
-**Use Case: Set up laser 0 with initial PID tuning**
-
-```
-create_laser(0)
-```
-
 ---
 
 ### 2. Configure Laser PID Parameters
@@ -54,18 +48,6 @@ configure_laser_pid(pid, kp, ki, kd)
 - `ki`: Integral gain. Reduces steady-state error over time. Start with 50.
 - `kd`: Derivative gain. Helps dampen oscillations. Start with 10.
 
-**Use Case: Tune laser 0 for better stability**
-
-```
-configure_laser_pid(0, kp=150, ki=75, kd=15)
-```
-
-**Use Case: Switch to a faster response (aggressive tuning)**
-
-```
-configure_laser_pid(0, kp=250, ki=100, kd=20)
-```
-
 ---
 
 ### 3. Start Cavity Scan
@@ -79,18 +61,6 @@ start_cavity_scan(duration)
 **Parameters:**
 
 - `duration`: How long to scan in seconds.
-
-**Use Case: Scan for 30 seconds to let the system stabilize**
-
-```
-start_cavity_scan(30)
-```
-
-**Use Case: Quick 5-second test scan**
-
-```
-start_cavity_scan(5)
-```
 
 ---
 
@@ -107,26 +77,6 @@ lock(pid, wavelength)
 - `pid`: Laser index (0-4)
 - `wavelength`: Target wavelength in nanometers (nm)
 
-**Use Case: Lock laser 0 to 650 nm (common red laser)**
-
-```
-lock(0, 650.0)
-```
-
-**Use Case: Lock laser 1 to 780 nm (near-IR)**
-
-```
-lock(1, 780.0)
-```
-
-**Use Case: Lock multiple lasers**
-
-```
-lock(0, 625.0)
-lock(1, 650.0)
-lock(2, 675.0)
-```
-
 ---
 
 ### 5. Unlock a Laser
@@ -141,12 +91,6 @@ unlock(pid)
 **Parameters:**
 
 - `pid`: Laser index (0-4)
-
-**Use Case: Stop controlling laser 0**
-
-```
-unlock(0)
-```
 
 ---
 
