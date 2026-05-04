@@ -28,7 +28,8 @@ Science Group.
 ## 2. Hardware Setup and Documentation
 
 In order to start developing and testing the FPGA-based feedback control system,
-you will need to set up the hardware as follows:
+you will need to set up the hardware as decscribed in `docs/hardware_setup.md`.
+This includes assembling the necessary components.
 
 ## 3. Getting Started
 
@@ -44,11 +45,9 @@ you will need to set up the hardware as follows:
 ### 3.1 Initial Board Setup
 
 1. **Flash the PYNQ Image**:
-    - Download the PYNQ image from the
-      [official PYNQ releases](https://github.com/Xilinx/PYNQ/releases)
     - Follow the
-      [PYNQ Getting Started guide](https://pynq.readthedocs.io/en/latest/getting_started.html)
-    - Flash the image to a microSD card using Etcher or similar tool
+      [AUP-ZU3 Getting Started guide](https://xilinx.github.io/AUP-ZU3/getting_started.html)
+        - Download and Flash the image linked in the guide to a microSD card using Balena Etcher or similar tool
     - Insert the microSD card into the Xilinx AUP-ZU3 board
 
 2. **Network Configuration**:
