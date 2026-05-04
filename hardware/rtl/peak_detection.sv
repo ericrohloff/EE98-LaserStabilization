@@ -50,6 +50,7 @@ module peak_detection #(
 	logic [IDX_W:0] candidate_count;
 
 	integer i;
+	integer candidate_index;
 
 	function automatic [15:0] abs_diff;
 		input [15:0] a;
@@ -123,9 +124,9 @@ module peak_detection #(
 					// assign r1 to lowest pos, r2 to highest pos 
 					r1_position <= candidate_pos[0];
 					r2_position <= candidate_pos[candidate_count-1];
-					// assign l1-l4 to middle candidates based on which are locked
 					multiplier = (16'hFFFF) / (r2_position - r1_position);
-					integer candidate_index = 1; 
+					// assign l1-l4 to middle candidates based on which are locked 
+					candidate_index = 1; 
 					for (i = 0; i < 4; i = i + 1) begin 
 						if (locked_mask[i]) begin 
 							case (i) 
