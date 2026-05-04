@@ -30,12 +30,6 @@ Science Group.
 In order to start developing and testing the FPGA-based feedback control system,
 you will need to set up the hardware as follows:
 
-1. **FPGA Development Board**: The setup guide can be found in the
-   [Xilinx AUP-ZU3 Documentation](https://xilinx.github.io/AUP-ZU3/getting_started.html).
-2. **Laser Stabilization Components**: Optical cavity, laser diodes,
-   photodetectors, and analog signal conditioning circuits as documented in the
-   hardware schematics.
-
 ## 3. Getting Started
 
 ### Prerequisites
