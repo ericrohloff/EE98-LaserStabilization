@@ -39,7 +39,7 @@ module peak_detection #(
 	logic [3:0] locked_mask;
 	integer num_locked;
 
-	logic [15:0] multiplier;
+	logic [31:0] multiplier;
 
 	typedef enum logic [2:0] {
 		ASSIGN_IDLE,
@@ -118,7 +118,7 @@ module peak_detection #(
 			case (assign_state)
 				ASSIGN_DIVIDE: begin
 					if (assign_r2_position > assign_r1_position) begin
-						multiplier <= (16'hFFFF) / (assign_r2_position - assign_r1_position);
+						multiplier <= (32'hFFFF0000) / {(assign_r2_position - assign_r1_position), 16'h0000};
 						assign_state <= ASSIGN_MULTIPLY;
 					end else begin
 						l1_position <= 16'd0;
@@ -133,10 +133,10 @@ module peak_detection #(
 					for (i = 0; i < 4; i = i + 1) begin
 						if (assign_locked_mask[i]) begin
 							case (i)
-								0: l1_position <= assign_candidate_pos[candidate_index] * multiplier;
-								1: l2_position <= assign_candidate_pos[candidate_index] * multiplier;
-								2: l3_position <= assign_candidate_pos[candidate_index] * multiplier;
-								3: l4_position <= assign_candidate_pos[candidate_index] * multiplier;
+								0: l1_position <= ({assign_candidate_pos[candidate_index], 16'h0000} * multiplier)[31:16];
+								1: l2_position <= ({assign_candidate_pos[candidate_index], 16'h0000} * multiplier)[31:16];
+								2: l3_position <= ({assign_candidate_pos[candidate_index], 16'h0000} * multiplier)[31:16];
+								3: l4_position <= ({assign_candidate_pos[candidate_index], 16'h0000} * multiplier)[31:16];
 							endcase
 							candidate_index = candidate_index + 1;
 						end else begin
