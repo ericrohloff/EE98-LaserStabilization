@@ -38,9 +38,24 @@ you will need to set up the hardware as follows:
 
 ### Prerequisites
 
+- PYNQ Board (Xilinx AUP-ZU3)
+- Python 3.8 or higher
+- PYNQ framework installed on the board
+- Network connectivity to the PYNQ board (192.168.3.1)
+- `.bit` and `.hwh` files transferred to the PYNQ board
+
 ### Installation
 
-To get started with the project, follow these steps:
+Run the following commands on the PYNQ board to start the server:
+
+```bash
+ssh xilinx@192.168.3.1
+# password: xilinx
+sudo -i
+source /usr/local/share/pynq-venv/bin/activate
+cd /home/xilinx/jupyter_notebooks/
+python server.py
+```
 
 ## 4. Repository Structure
 
