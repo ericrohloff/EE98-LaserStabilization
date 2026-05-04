@@ -1,16 +1,3 @@
-"""
-pynq_controls.py
-----------------
-Hardware abstraction layer for server-side PYNQ control logic.
-
-This module centralizes board-specific interactions so server.py can stay focused
-on packet parsing, protocol state, and socket handling.
-
-Note:
-- Register offsets, bitfields, and signal names are intentionally left as TODO.
-- Replace TODO blocks when the hardware register map is finalized.
-"""
-
 from __future__ import annotations
 
 import logging

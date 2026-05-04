@@ -1,13 +1,3 @@
-"""
-pynq_client.py
---------------
-Backend client for communicating with a PYNQ FPGA board over TCP sockets.
-
-This module contains only protocol, transport, and high-level command methods.
-It intentionally has no CLI concerns so additional frontends (GUI, web API,
-schedulers, tests) can reuse the same backend.
-"""
-
 import logging
 import socket
 import struct

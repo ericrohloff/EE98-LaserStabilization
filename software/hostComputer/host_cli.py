@@ -1,13 +1,3 @@
-"""
-host_cli.py
------------
-CLI frontend for the PYNQ host controller.
-
-This module is intentionally separate from transport/protocol logic so other
-frontends can be added later (for example, GUI, REST API, or notebooks) while
-reusing the same backend in pynq_client.py.
-"""
-
 import argparse
 import shlex
 import time
