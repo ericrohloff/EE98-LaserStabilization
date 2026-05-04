@@ -73,11 +73,6 @@ you will need to set up the hardware as follows:
     scp hardware/fpga/vivado/vivado.runs/impl_1/design_1_wrapper.hwh xilinx@192.168.3.1:/home/xilinx/
     ```
 
-3. **Verify File Transfer**:
-    ```bash
-    ssh xilinx@192.168.3.1 ls -la /home/xilinx/*.bit /home/xilinx/*.hwh
-    ```
-
 ### 3.3 Running the Server
 
 1. **SSH into the PYNQ Board**:
@@ -107,9 +102,6 @@ you will need to set up the hardware as follows:
     python server.py
     ```
 
-    You should see output indicating the server is listening on a TCP port
-    (typically 5000).
-
 ### 3.4 Connecting from Host Computer
 
 Once the server is running, you can interact with it from your development
@@ -119,7 +111,6 @@ machine:
 
     ```bash
     cd software/hostComputer
-    pip install -r requirements.txt  # If requirements file exists
     ```
 
 2. **Run the CLI Client** (from repository root):
@@ -140,15 +131,6 @@ machine:
     # Lock a laser at target wavelength
     lock(0, 650.0)
     ```
-
-### 3.5 Troubleshooting
-
-- **Cannot connect to board**: Check network connectivity and IP address
-- **Bitstream load fails**: Verify `.bit` and `.hwh` files are in the correct
-  location
-- **Server crashes**: Check logs in `/home/xilinx/` for error messages
-- **Commands not working**: Ensure the FPGA overlay is properly loaded in the
-  server
 
 ## 4. Repository Structure
 
