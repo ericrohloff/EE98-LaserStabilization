@@ -121,7 +121,7 @@ class PYNQControls:
         frac = (set_wavelength - self._ref_wavelength) / self._ref_wavelength
         reg_addr = self._laser_reg_addr(laser_id, 0x10)
         current_word = self._read_reg(reg_addr)
-        new_word = (self._u16(set_wavelength) << 16) | (current_word & 0xFFFF)
+        new_word = (self._u16(frac * 0xFFFF) << 16) | (current_word & 0xFFFF)
         self._write_reg(reg_addr, new_word)
 
     def _update_system_locked_flag(self) -> None:
