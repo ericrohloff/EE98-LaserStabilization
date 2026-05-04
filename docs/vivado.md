@@ -1,5 +1,5 @@
 # Using vivado on linux
-Run `use xilinx.2022` to get the `xilinx` command. Run `xilinx PROJECT_NAME.xpr` to open the GUI.
+On the Tufts homework server, run `use xilinx.2022` to get the `xilinx` command. Run `xilinx PROJECT_NAME.xpr` to open the GUI.
 
 # Creating a project
 
