@@ -58,20 +58,11 @@ you will need to set up the hardware as follows:
 
 ### 3.2 Building and Transferring the Bitstream
 
-1. **Generate the FPGA Bitstream**:
+** Copy Files from Repositiory**: - Copy the precompiled bitstream (`.bit`) and
+hardware handoff (`.hwh`) files from the `hardware/` directory to the PYNQ board
+directory.
 
-    ```bash
-    cd hardware/rtl
-    make  # Compiles RTL to generate design_1_wrapper.bit and design_1_wrapper.hwh
-    ```
-
-2. **Transfer Files to PYNQ Board**:
-
-    ```bash
-    # From your development machine:
-    scp hardware/fpga/vivado/vivado.runs/impl_1/design_1_wrapper.bit xilinx@192.168.3.1:/home/xilinx/
-    scp hardware/fpga/vivado/vivado.runs/impl_1/design_1_wrapper.hwh xilinx@192.168.3.1:/home/xilinx/
-    ```
+**Transfer Files to PYNQ Board**:
 
 ### 3.3 Running the Server
 
@@ -150,7 +141,8 @@ machine:
 This project is intended for use in a laboratory setting, specifically for
 researchers working on trapped ion quantum computing. The FPGA-based feedback
 control system can be modified and integrated with existing laser setups to
-enhance stability and performance.
+enhance stability and performance. Reference commands and usage examples are
+provided in `docs/usage_examples.md`
 
 ## 6. Team
 
