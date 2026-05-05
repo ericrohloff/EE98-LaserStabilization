@@ -25,6 +25,9 @@ ultra-low-latency method for laser frequency locking. This system is designed to
 meet the rigorous specifications provided by the University of Sydney’s Quantum
 Science Group.
 
+### Future Work
+We made a lot of progress towards our solution, but some testing and development is still needed. In the case that other groups want to continue our work, we have put together a list of todos: [`docs/TODOS.md`](docs/TODOS.md).
+
 ## 2. Hardware Setup and Documentation
 
 In order to start developing and testing the FPGA-based feedback control system,
@@ -154,3 +157,8 @@ provided in `docs/usage_examples.md`
 
 Special thanks to Professor Mark Hempstead and the University of Syndey Quantum
 Science Group for their support and sponsorship.
+
+## Related Work
+[1] E. Pultinevicius et al., “A scalable scanning transfer cavity laser stabilization scheme based on the Red Pitaya STEMlab platform,” Review of Scientific Instruments, vol. 94, no. 10, p. 103004, Oct. 2023, doi: [10.1063/5.0169021](https://doi.org/10.1063/5.0169021).
+
+[2] S. Subhankar, A. Restelli, Y. Wang, S. L. Rolston, and J. V. Porto, “Microcontroller based scanning transfer cavity lock for long-term laser frequency stabilization,” 2018, doi: [10.48550/ARXIV.1810.07256](https://doi.org/10.48550/ARXIV.1810.07256).
