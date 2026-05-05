@@ -348,13 +348,18 @@ class PYNQControls:
     def read_laser_detected_wavelength(self, laser_id: int) -> int:
         """Read the detected wavelength field exposed by the RTL for a laser slot."""
         raw = self._read_reg(self._laser_reg_addr(laser_id, 0x10))
-        detected_wavelength = raw & 0xFFFF
+        ref_fraction = raw & 0xFFFF
+        if ref_fraction > 0:
+            frac = 0xFFFF / ref_fraction
+            wavelength = self._ref_wavelength * frac
+        else:
+            wavelength = 0
         self._logger.debug(
             "pynq_controls.read_laser_detected_wavelength | laser_id=%d value=%d",
             laser_id,
-            detected_wavelength,
+            wavelength,
         )
-        return detected_wavelength
+        return wavelength
 
     def read_laser_state(self, laser_id: int) -> dict:
         """Return the cached and hardware-backed state for one laser."""
