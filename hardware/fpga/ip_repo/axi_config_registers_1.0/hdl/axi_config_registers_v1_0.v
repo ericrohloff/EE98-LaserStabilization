@@ -32,6 +32,7 @@
         output wire [31:0] l1_pid_d,
         output wire [15:0] l1_set_wavelength,
         input  wire [15:0] l1_detected_wavelength,
+        input  wire [15:0] l1_debug_feedback,
 		
 		
 		output wire [3:0] l2_id,
@@ -42,6 +43,7 @@
         output wire [31:0] l2_pid_d,
         output wire [15:0] l2_set_wavelength,
         input  wire [15:0] l2_detected_wavelength,
+        input  wire [15:0] l2_debug_feedback,
 		
 		output wire [3:0] l3_id,
 		output wire l3_exists,
@@ -51,6 +53,7 @@
         output wire [31:0] l3_pid_d,
         output wire [15:0] l3_set_wavelength,
         input  wire [15:0] l3_detected_wavelength,
+        input  wire [15:0] l3_debug_feedback,
 		
 		output wire [3:0] l4_id,
 		output wire l4_exists,
@@ -60,6 +63,7 @@
         output wire [31:0] l4_pid_d,
         output wire [15:0] l4_set_wavelength,
         input  wire [15:0] l4_detected_wavelength,
+        input  wire [15:0] l4_debug_feedback,
 
 
         ///// Global flags

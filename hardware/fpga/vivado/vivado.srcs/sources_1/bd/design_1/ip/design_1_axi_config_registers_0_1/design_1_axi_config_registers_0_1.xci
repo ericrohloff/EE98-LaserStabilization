@@ -68,7 +68,7 @@
         <spirit:configurableElementValue spirit:referenceId="PROJECT_PARAM.USE_RDI_CUSTOMIZATION">TRUE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="PROJECT_PARAM.USE_RDI_GENERATION">TRUE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.IPCONTEXT">IP_Integrator</spirit:configurableElementValue>
-        <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.IPREVISION">4</spirit:configurableElementValue>
+        <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.IPREVISION">6</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.MANAGED">TRUE</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.OUTPUTDIR">../../../../../../vivado.gen/sources_1/bd/design_1/ip/design_1_axi_config_registers_0_1</spirit:configurableElementValue>
         <spirit:configurableElementValue spirit:referenceId="RUNTIME_PARAM.SELECTEDSIMMODEL"/>
@@ -135,6 +135,7 @@
                   &quot;l1_pid_d&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;31&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l1_set_wavelength&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l1_detected_wavelength&quot;: [ { &quot;direction&quot;: &quot;in&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
+                  &quot;l1_debug_feedback&quot;: [ { &quot;direction&quot;: &quot;in&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l2_id&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;3&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l2_exists&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
                   &quot;l2_locked&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
@@ -143,6 +144,7 @@
                   &quot;l2_pid_d&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;31&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l2_set_wavelength&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l2_detected_wavelength&quot;: [ { &quot;direction&quot;: &quot;in&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
+                  &quot;l2_debug_feedback&quot;: [ { &quot;direction&quot;: &quot;in&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l3_id&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;3&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l3_exists&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
                   &quot;l3_locked&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
@@ -151,6 +153,7 @@
                   &quot;l3_pid_d&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;31&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l3_set_wavelength&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l3_detected_wavelength&quot;: [ { &quot;direction&quot;: &quot;in&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
+                  &quot;l3_debug_feedback&quot;: [ { &quot;direction&quot;: &quot;in&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l4_id&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;3&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l4_exists&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
                   &quot;l4_locked&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
@@ -159,6 +162,7 @@
                   &quot;l4_pid_d&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;31&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l4_set_wavelength&quot;: [ { &quot;direction&quot;: &quot;out&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;l4_detected_wavelength&quot;: [ { &quot;direction&quot;: &quot;in&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
+                  &quot;l4_debug_feedback&quot;: [ { &quot;direction&quot;: &quot;in&quot;, &quot;size_left&quot;: &quot;15&quot;, &quot;size_right&quot;: &quot;0&quot; } ],
                   &quot;system_on&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
                   &quot;system_locked&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],
                   &quot;adc_sample_requested&quot;: [ { &quot;direction&quot;: &quot;out&quot; } ],

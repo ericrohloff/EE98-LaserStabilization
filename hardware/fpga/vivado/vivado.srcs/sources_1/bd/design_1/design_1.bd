@@ -35,8 +35,8 @@
       },
       "axi_registers_0": "",
       "axi_bram_ctrl_0": "",
-      "axi_config_registers_0": "",
       "adc_bram_wrapper_0": "",
+      "axi_config_registers_0": "",
       "algorithm_top_wrapper_0": ""
     },
     "interface_ports": {
@@ -4115,12 +4115,6 @@
           }
         }
       },
-      "axi_config_registers_0": {
-        "vlnv": "user.org:user:axi_config_registers:1.0",
-        "xci_name": "design_1_axi_config_registers_0_1",
-        "xci_path": "ip/design_1_axi_config_registers_0_1/design_1_axi_config_registers_0_1.xci",
-        "inst_hier_path": "axi_config_registers_0"
-      },
       "adc_bram_wrapper_0": {
         "vlnv": "xilinx.com:module_ref:adc_bram_wrapper:1.0",
         "xci_name": "design_1_adc_bram_wrapper_0_0",
@@ -4212,6 +4206,12 @@
           }
         }
       },
+      "axi_config_registers_0": {
+        "vlnv": "user.org:user:axi_config_registers:1.0",
+        "xci_name": "design_1_axi_config_registers_0_1",
+        "xci_path": "ip/design_1_axi_config_registers_0_1/design_1_axi_config_registers_0_1.xci",
+        "inst_hier_path": "axi_config_registers_0"
+      },
       "algorithm_top_wrapper_0": {
         "vlnv": "xilinx.com:module_ref:algorithm_top_wrapper:1.0",
         "xci_name": "design_1_algorithm_top_wrapper_0_0",
@@ -4295,6 +4295,11 @@
             "left": "15",
             "right": "0"
           },
+          "l1_debug_feedback": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
           "l2_id": {
             "direction": "I",
             "left": "3",
@@ -4327,6 +4332,11 @@
             "right": "0"
           },
           "l2_detected_wavelength": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "l2_debug_feedback": {
             "direction": "O",
             "left": "15",
             "right": "0"
@@ -4367,6 +4377,11 @@
             "left": "15",
             "right": "0"
           },
+          "l3_debug_feedback": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
           "l4_id": {
             "direction": "I",
             "left": "3",
@@ -4399,6 +4414,11 @@
             "right": "0"
           },
           "l4_detected_wavelength": {
+            "direction": "O",
+            "left": "15",
+            "right": "0"
+          },
+          "l4_debug_feedback": {
             "direction": "O",
             "left": "15",
             "right": "0"
@@ -4695,10 +4715,22 @@
           "feedback_dac_sck"
         ]
       },
+      "algorithm_top_wrapper_0_l1_debug_feedback": {
+        "ports": [
+          "algorithm_top_wrapper_0/l1_debug_feedback",
+          "axi_config_registers_0/l1_debug_feedback"
+        ]
+      },
       "algorithm_top_wrapper_0_l1_detected_wavelength": {
         "ports": [
           "algorithm_top_wrapper_0/l1_detected_wavelength",
           "axi_config_registers_0/l1_detected_wavelength"
+        ]
+      },
+      "algorithm_top_wrapper_0_l2_debug_feedback": {
+        "ports": [
+          "algorithm_top_wrapper_0/l2_debug_feedback",
+          "axi_config_registers_0/l2_debug_feedback"
         ]
       },
       "algorithm_top_wrapper_0_l2_detected_wavelength": {
@@ -4707,10 +4739,22 @@
           "axi_config_registers_0/l2_detected_wavelength"
         ]
       },
+      "algorithm_top_wrapper_0_l3_debug_feedback": {
+        "ports": [
+          "algorithm_top_wrapper_0/l3_debug_feedback",
+          "axi_config_registers_0/l3_debug_feedback"
+        ]
+      },
       "algorithm_top_wrapper_0_l3_detected_wavelength": {
         "ports": [
           "algorithm_top_wrapper_0/l3_detected_wavelength",
           "axi_config_registers_0/l3_detected_wavelength"
+        ]
+      },
+      "algorithm_top_wrapper_0_l4_debug_feedback": {
+        "ports": [
+          "algorithm_top_wrapper_0/l4_debug_feedback",
+          "axi_config_registers_0/l4_debug_feedback"
         ]
       },
       "algorithm_top_wrapper_0_l4_detected_wavelength": {
@@ -5014,8 +5058,8 @@
           "axi_registers_0/s00_axi_aresetn",
           "axi_bram_ctrl_0/s_axi_aresetn",
           "axi_gpio_0/s_axi_aresetn",
-          "axi_config_registers_0/s00_axi_aresetn",
-          "axi_interconnect_0/M03_ARESETN"
+          "axi_interconnect_0/M03_ARESETN",
+          "axi_config_registers_0/s00_axi_aresetn"
         ]
       },
       "proc_sys_reset_1_mb_reset": {
@@ -5049,8 +5093,8 @@
           "axi_registers_0/s00_axi_aclk",
           "axi_bram_ctrl_0/s_axi_aclk",
           "axi_gpio_0/s_axi_aclk",
-          "axi_config_registers_0/s00_axi_aclk",
-          "axi_interconnect_0/M03_ACLK"
+          "axi_interconnect_0/M03_ACLK",
+          "axi_config_registers_0/s00_axi_aclk"
         ]
       },
       "zynq_ultra_ps_e_0_pl_resetn0": {
