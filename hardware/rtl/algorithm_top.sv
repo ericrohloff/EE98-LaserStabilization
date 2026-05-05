@@ -16,6 +16,7 @@ module algorithm_top (
 	input  wire [31:0] l1_pid_d,
 	input  wire [15:0] l1_set_wavelength,
 	output wire [15:0] l1_detected_wavelength,
+	output wire [15:0] l1_debug_feedback,
 
 	input  wire [3:0] l2_id,
 	input  wire l2_exists,
@@ -25,6 +26,7 @@ module algorithm_top (
 	input  wire [31:0] l2_pid_d,
 	input  wire [15:0] l2_set_wavelength,
 	output wire [15:0] l2_detected_wavelength,
+	output wire [15:0] l2_debug_feedback,
 
 	input  wire [3:0] l3_id,
 	input  wire l3_exists,
@@ -34,6 +36,7 @@ module algorithm_top (
 	input  wire [31:0] l3_pid_d,
 	input  wire [15:0] l3_set_wavelength,
 	output wire [15:0] l3_detected_wavelength,
+	output wire [15:0] l3_debug_feedback,
 
 	input  wire [3:0] l4_id,
 	input  wire l4_exists,
@@ -43,6 +46,7 @@ module algorithm_top (
 	input  wire [31:0] l4_pid_d,
 	input  wire [15:0] l4_set_wavelength,
 	output wire [15:0] l4_detected_wavelength,
+	output wire [15:0] l4_debug_feedback,
 
 	input  wire system_on,
 	input  wire system_locked,
@@ -67,6 +71,10 @@ module algorithm_top (
 	output wire feedback_dac_sck,
 	output wire feedback_dac_cs,
 
+    output wire requested, 
+    output wire ramp_start, 
+    output wire [15:0] counter, 
+
     // Debug
     output wire debug_pin_0,
     output wire debug_pin_1,
@@ -89,7 +97,13 @@ module algorithm_top (
     );
 
     logic ramp_done;
+    logic ramp_cycle_start;
+    logic [15:0] current_ramp_pos;
+    logic adc_sample_valid;
+    assign debug_pin_1 = adc_sample_valid; // TODO give this a real port
     assign debug_pin_0 = ramp_done;
+    assign counter = current_ramp_pos;
+    assign ramp_start = ramp_cycle_start;
 
 	ramp_dac_spi u_ramp_dac_spi (
         .clk(clk),
@@ -104,6 +118,8 @@ module algorithm_top (
         .ramp_dac_sck(dac_sck),
         .ramp_dac_mosi(dac_mosi),
         .ramp_dac_ldac_n(dac_ldac_n),
+        .current_ramp_pos(current_ramp_pos),
+        .ramp_cycle_start(ramp_cycle_start),
         .ramp_done(ramp_done)
     );
 
@@ -115,7 +131,8 @@ module algorithm_top (
         .adc_miso(adc_miso),
         .adc_cnv(adc_cnv),
         .adc_sck(adc_sck),
-        .adc_sample_unsigned(adc_sample_unsigned)
+        .adc_sample_unsigned(adc_sample_unsigned),
+        .adc_sample_valid(adc_sample_valid)
     );
 
     logic [15:0] l1_peak_position;
@@ -123,26 +140,55 @@ module algorithm_top (
     logic [15:0] l3_peak_position;
     logic [15:0] l4_peak_position;
 
+    logic l1_peak_valid;
+    logic l2_peak_valid;
+    logic l3_peak_valid;
+    logic l4_peak_valid;
+
     logic [15:0] l1_feedback;
     logic [15:0] l2_feedback;
     logic [15:0] l3_feedback;
     logic [15:0] l4_feedback;
 
-	peak_detection u_peak_detection (
-        .adc_sample(adc_sample_unsigned),
-        .ramp_start(), // TODO
-        .l1_target(l1_set_wavelength),
-        .l2_target(l2_set_wavelength),
-        .l3_target(l3_set_wavelength),
-        .l4_target(l4_set_wavelength),
+    assign ref_detected_wavelength = 16'd0;
+    
+    assign l1_debug_feedback = l1_feedback;
+    assign l2_debug_feedback = l2_feedback;
+    assign l3_debug_feedback = l3_feedback;
+    assign l4_debug_feedback = l4_feedback;
 
-        .l1_position(l1_peak_position),
-        .l2_position(l2_peak_position),
-        .l3_position(l3_peak_position),
-        .l4_position(l4_peak_position)
+	peak_detection u_peak_detection (
+        .clk(clk),
+        .reset(reset),
+        .adc_sample(adc_sample_unsigned),
+        .adc_sample_valid(adc_sample_valid),
+        .current_ramp_pos(current_ramp_pos),
+        .ramp_start(ramp_cycle_start),
+    .l1_exists(l1_exists),
+    .l2_exists(l2_exists),
+    .l3_exists(l3_exists),
+    .l4_exists(l4_exists),
+    .l1_locked(l1_locked),
+    .l2_locked(l2_locked),
+    .l3_locked(l3_locked),
+    .l4_locked(l4_locked),
+
+        .l1_position(l1_detected_wavelength),
+        .l2_position(l2_detected_wavelength),
+        .l3_position(l3_detected_wavelength),
+        .l4_position(l4_detected_wavelength),
+        .l1_valid(l1_peak_valid),
+        .l2_valid(l2_peak_valid),
+        .l3_valid(l3_peak_valid),
+        .l4_valid(l4_peak_valid)
     );
 
+
 	laser_controller u_l1_controller (
+        .clk(clk),
+        .reset(reset),
+        .ramp_start(ramp_cycle_start),
+        .peak_valid(l1_peak_valid),
         .laser_id(l1_id),
         .laser_exists(l1_exists),
         .laser_locked(l1_locked),
@@ -150,11 +196,16 @@ module algorithm_top (
         .pid_i(l1_pid_i),
         .pid_d(l1_pid_d),
         .set_wavelength(l1_set_wavelength),
-        .current_wavelength(l1_peak_position),
+        .current_wavelength(l1_detected_wavelength),
         .ref_wavelength(ref_set_wavelength),
         .feedback(l1_feedback)
     );
+    
 	laser_controller u_l2_controller (
+    .clk(clk),
+    .reset(reset),
+    .ramp_start(ramp_cycle_start),
+    .peak_valid(l2_peak_valid),
         .laser_id(l2_id),
         .laser_exists(l2_exists),
         .laser_locked(l2_locked),
@@ -162,11 +213,15 @@ module algorithm_top (
         .pid_i(l2_pid_i),
         .pid_d(l2_pid_d),
         .set_wavelength(l2_set_wavelength),
-        .current_wavelength(l2_peak_position),
+        .current_wavelength(l2_detected_wavelength),
         .ref_wavelength(ref_set_wavelength),
         .feedback(l2_feedback)
     );
 	laser_controller u_l3_controller (
+    .clk(clk),
+    .reset(reset),
+    .ramp_start(ramp_cycle_start),
+    .peak_valid(l3_peak_valid),
         .laser_id(l3_id),
         .laser_exists(l3_exists),
         .laser_locked(l3_locked),
@@ -174,11 +229,15 @@ module algorithm_top (
         .pid_i(l3_pid_i),
         .pid_d(l3_pid_d),
         .set_wavelength(l3_set_wavelength),
-        .current_wavelength(l3_peak_position),
+        .current_wavelength(l3_detected_wavelength),
         .ref_wavelength(ref_set_wavelength),
         .feedback(l3_feedback)
     );
 	laser_controller u_l4_controller (
+    .clk(clk),
+    .reset(reset),
+    .ramp_start(ramp_cycle_start),
+    .peak_valid(l4_peak_valid),
         .laser_id(l4_id),
         .laser_exists(l4_exists),
         .laser_locked(l4_locked),
@@ -186,7 +245,7 @@ module algorithm_top (
         .pid_i(l4_pid_i),
         .pid_d(l4_pid_d),
         .set_wavelength(l4_set_wavelength),
-        .current_wavelength(l4_peak_position),
+        .current_wavelength(l4_detected_wavelength),
         .ref_wavelength(ref_set_wavelength),
         .feedback(l4_feedback)
     );
@@ -196,18 +255,14 @@ module algorithm_top (
         .enable(enable),
         .reset(reset),
         .update_trigger(ramp_done),
-        // .l1_feedback_value(l1_feedback),
-        .l1_feedback_value(16'hFFFF),
-        .l1_feedback_enable(1),
-        // .l2_feedback_value(l2_feedback),
-        .l2_feedback_value(16'hFFFF),
-        .l2_feedback_enable(1),
-        // .l3_feedback_value(l3_feedback),
-        .l3_feedback_value(16'hFFFF),
-        .l3_feedback_enable(1),
-        // .l4_feedback_value(l4_feedback),
-        .l4_feedback_value(16'hFFFF),
-        .l4_feedback_enable(1),
+        .l1_feedback_value(l1_feedback),
+        .l1_feedback_enable(l1_exists && l1_locked),
+        .l2_feedback_value(l2_feedback),
+        .l2_feedback_enable(l2_exists && l2_locked),
+        .l3_feedback_value(l3_feedback),
+        .l3_feedback_enable(l3_exists && l3_locked),
+        .l4_feedback_value(l4_feedback),
+        .l4_feedback_enable(l4_exists && l4_locked),
 
         .dac_cs(feedback_dac_cs),
         .dac_mosi(feedback_dac_mosi),

@@ -16,6 +16,7 @@ module algorithm_top_wrapper (
 	input  wire [31:0] l1_pid_d,
 	input  wire [15:0] l1_set_wavelength,
 	output wire [15:0] l1_detected_wavelength,
+	output wire [15:0] l1_debug_feedback,
 
 	input  wire [3:0] l2_id,
 	input  wire l2_exists,
@@ -25,6 +26,7 @@ module algorithm_top_wrapper (
 	input  wire [31:0] l2_pid_d,
 	input  wire [15:0] l2_set_wavelength,
 	output wire [15:0] l2_detected_wavelength,
+	output wire [15:0] l2_debug_feedback,
 
 	input  wire [3:0] l3_id,
 	input  wire l3_exists,
@@ -34,6 +36,7 @@ module algorithm_top_wrapper (
 	input  wire [31:0] l3_pid_d,
 	input  wire [15:0] l3_set_wavelength,
 	output wire [15:0] l3_detected_wavelength,
+	output wire [15:0] l3_debug_feedback,
 
 	input  wire [3:0] l4_id,
 	input  wire l4_exists,
@@ -43,6 +46,7 @@ module algorithm_top_wrapper (
 	input  wire [31:0] l4_pid_d,
 	input  wire [15:0] l4_set_wavelength,
 	output wire [15:0] l4_detected_wavelength,
+	output wire [15:0] l4_debug_feedback,
 
 	input  wire system_on,
 	input  wire system_locked,
@@ -62,11 +66,16 @@ module algorithm_top_wrapper (
 	output wire dac_cs,
 	output wire dac_ldac_n,
 
+    // Ramp DAC
 	output wire feedback_dac_mosi,
 	output wire feedback_dac_sck,
 	output wire feedback_dac_cs,
 
+    output wire requested, 
+    output wire ramp_start, 
+    output wire [15:0] counter, 
 
+    // Debug
     output wire debug_pin_0,
     output wire debug_pin_1,
     output wire debug_pin_2,
@@ -95,6 +104,7 @@ algorithm_top u_algorithm_top (
     .l1_pid_d(l1_pid_d),
     .l1_set_wavelength(l1_set_wavelength),
     .l1_detected_wavelength(l1_detected_wavelength),
+    .l1_debug_feedback(l1_debug_feedback),
 
     .l2_id(l2_id),
     .l2_exists(l2_exists),
@@ -104,6 +114,7 @@ algorithm_top u_algorithm_top (
     .l2_pid_d(l2_pid_d),
     .l2_set_wavelength(l2_set_wavelength),
     .l2_detected_wavelength(l2_detected_wavelength),
+    .l2_debug_feedback(l2_debug_feedback),
 
     .l3_id(l3_id),
     .l3_exists(l3_exists),
@@ -113,6 +124,7 @@ algorithm_top u_algorithm_top (
     .l3_pid_d(l3_pid_d),
     .l3_set_wavelength(l3_set_wavelength),
     .l3_detected_wavelength(l3_detected_wavelength),
+    .l3_debug_feedback(l3_debug_feedback),
 
     .l4_id(l4_id),
     .l4_exists(l4_exists),
@@ -122,6 +134,7 @@ algorithm_top u_algorithm_top (
     .l4_pid_d(l4_pid_d),
     .l4_set_wavelength(l4_set_wavelength),
     .l4_detected_wavelength(l4_detected_wavelength),
+    .l4_debug_feedback(l4_debug_feedback),
 
     .system_on(system_on),
     .system_locked(system_locked),
@@ -144,6 +157,10 @@ algorithm_top u_algorithm_top (
     .feedback_dac_mosi(feedback_dac_mosi),
     .feedback_dac_sck(feedback_dac_sck),
     .feedback_dac_cs(feedback_dac_cs),
+
+    .requested(requested),
+    .ramp_start(ramp_start),
+    .counter(counter),
 
     .debug_pin_0(debug_pin_0),
     .debug_pin_1(debug_pin_1),

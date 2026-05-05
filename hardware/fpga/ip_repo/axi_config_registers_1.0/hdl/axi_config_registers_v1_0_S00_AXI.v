@@ -33,6 +33,7 @@
         output wire [31:0] l1_pid_d,
         output wire [15:0] l1_set_wavelength,
         input  wire [15:0] l1_detected_wavelength,
+        input  wire [15:0] l1_debug_feedback,
 		
 		
 		output wire [3:0] l2_id,
@@ -43,6 +44,7 @@
         output wire [31:0] l2_pid_d,
         output wire [15:0] l2_set_wavelength,
         input  wire [15:0] l2_detected_wavelength,
+        input  wire [15:0] l2_debug_feedback,
 		
 		output wire [3:0] l3_id,
 		output wire l3_exists,
@@ -52,6 +54,7 @@
         output wire [31:0] l3_pid_d,
         output wire [15:0] l3_set_wavelength,
         input  wire [15:0] l3_detected_wavelength,
+        input  wire [15:0] l3_debug_feedback,
 		
 		output wire [3:0] l4_id,
 		output wire l4_exists,
@@ -61,11 +64,13 @@
         output wire [31:0] l4_pid_d,
         output wire [15:0] l4_set_wavelength,
         input  wire [15:0] l4_detected_wavelength,
+        input  wire [15:0] l4_debug_feedback,
 
 
         ///// Global flags
         output wire system_on,
         output wire system_locked,
+		output wire adc_sample_requested,
 		
 
 		// User ports ends
@@ -727,9 +732,9 @@
 	        5'h16   : reg_data_out <= slv_reg22;
 	        5'h17   : reg_data_out <= slv_reg23;
 	        5'h18   : reg_data_out <= {slv_reg24[31:16], l4_detected_wavelength};
-	        5'h19   : reg_data_out <= slv_reg25;
-	        5'h1A   : reg_data_out <= slv_reg26;
-	        5'h1B   : reg_data_out <= slv_reg27;
+	        5'h19   : reg_data_out <= slv_reg25; // Global flags
+	        5'h1A   : reg_data_out <= {l1_debug_feedback, l2_debug_feedback};
+	        5'h1B   : reg_data_out <= {l3_debug_feedback, l4_debug_feedback};
 	        5'h1C   : reg_data_out <= slv_reg28;
 	        5'h1D   : reg_data_out <= slv_reg29;
 	        5'h1E   : reg_data_out <= slv_reg30;
@@ -803,6 +808,7 @@
     ///// Global flags
     assign system_on = slv_reg25[0];
     assign system_locked = slv_reg25[1];
+	assign adc_sample_requested = slv_reg25[2];
 
 	// User logic ends
 

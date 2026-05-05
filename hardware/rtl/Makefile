@@ -5,7 +5,7 @@ IVERILOG = iverilog
 VVP = vvp
 
 # Targets
-.PHONY: all clean sim spi_sim dac_sim ramp_sim pid dac ramp feedback_dac_sim
+.PHONY: all clean sim spi_sim dac_sim ramp_sim pid dac ramp feedback_dac_sim peak peak_sim pid_vector_sim
 
 all: sim
 
@@ -34,6 +34,20 @@ ramp_sim: ramp_bringup_tb.vvp
 feedback_dac_sim: feedback_dac_driver_tb.vvp
 	$(VVP) feedback_dac_driver_tb.vvp
 
+vector_sim:
+	cd ../../simulation && python3 run_sim_export_vectors.py
+
+test_verilog_algorithms: vector_sim peak_sim pid_vector_sim
+	cd ../../tests/rtlValidation && \
+	python3 compare_peak_outputs.py && \
+	python3 compare_pid_outputs.py
+
+peak_sim: peak_detection_tb.vvp
+	$(VVP) peak_detection_tb.vvp
+
+pid_vector_sim: laser_controller_tb.vvp
+	$(VVP) laser_controller_tb.vvp
+
 pid_tb.vvp: pid_controller.sv pid_controller_tb.sv
 	$(IVERILOG) -g2012 -o pid_tb.vvp pid_controller.sv pid_controller_tb.sv
 
@@ -49,5 +63,11 @@ ramp_bringup_tb.vvp: global_timing_sequencer.sv ramp_dac_spi.sv adc_frontend.sv 
 feedback_dac_driver_tb.vvp: feedback_dac_driver.sv feedback_dac_driver_tb.sv
 	$(IVERILOG) -g2012 -o feedback_dac_driver_tb.vvp feedback_dac_driver.sv feedback_dac_driver_tb.sv
 
+peak_detection_tb.vvp: peak_detection.sv peak_detection_tb.sv
+	$(IVERILOG) -g2012 -o peak_detection_tb.vvp peak_detection.sv peak_detection_tb.sv
+
+laser_controller_tb.vvp: laser_controller.sv laser_controller_tb.sv
+	$(IVERILOG) -g2012 -o laser_controller_tb.vvp laser_controller.sv laser_controller_tb.sv
+
 clean:
-	rm -f pid_tb.vvp spi_tb.vvp dac_tb.vvp ramp_bringup_tb.vvp feedback_dac_driver_tb.vvp
+	rm -f pid_tb.vvp spi_tb.vvp dac_tb.vvp ramp_bringup_tb.vvp feedback_dac_driver_tb.vvp peak_detection_tb.vvp laser_controller_tb.vvp

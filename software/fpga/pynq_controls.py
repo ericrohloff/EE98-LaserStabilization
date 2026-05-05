@@ -214,9 +214,6 @@ class PYNQControls:
         self._write_reg(base_addr + 0x08, pid_param2)
         self._write_reg(base_addr + 0x0C, pid_param3)
 
-        # Keep Python-commanded setpoint in set_wavelength register.
-        # self._write_laser_set_wavelength(laser_id, pid_param1)
-
         self._logger.debug(
             "pynq_controls.configure_laser_pid | laser_id=%d p1=%d p2=%d p3=%d",
             laser_id,
