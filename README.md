@@ -37,6 +37,8 @@ In order to start developing and testing the FPGA-based feedback control system,
 you will need to set up the hardware as decscribed in `docs/hardware_setup.md`.
 This includes assembling the necessary components.
 
+Some notes related to the Vivado project have been recorded in [`docs/vivado.md`](docs/vivado.md).
+
 ## 3. Getting Started
 
 ### Prerequisites

@@ -7,6 +7,7 @@ and continue development.
 ## Hardware TODOs
 
 - [ ] Create a PCB for the 4-channel feedback DAC to eliminate wires
+- [ ] (Related to testing task below) Design a secondary system that helps validate our system
 
 ## Software/FPGA TODOs
 
