@@ -18,7 +18,7 @@ DAC: transmit the data for the first µs, then trigger CS to load the data
 
 We have something that looks like this:
 
-![](dac_adc.svg)
+![](image/dac_adc.svg)
 
 The SPI clock here has to run at ~25ns clock period. This is because we have to have 16 clock periods in under 500ns.
 
